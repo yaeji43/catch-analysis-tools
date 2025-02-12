@@ -4,9 +4,9 @@ description = "A package to support analysis tools within the CATCH interface"
 readme = "README.md"
 authors = [
     { name = "Ben Sharkey", email = "sharkey@umd.edu" },
-    { name = "Michael Kelley", email = "msk@astro.umd.edu"}, 
-    { name = "Yaeji Kim", email = "ykim1231@umd.edu"},
-    { name = "John Dailey", email = "dailey@umd.edu"}
+    { name = "Michael Kelley", email = "msk@astro.umd.edu" },
+    { name = "Yaeji Kim", email = "ykim1231@umd.edu" },
+    { name = "John Dailey", email = "dailey@umd.edu" },
 ]
 license = { text = "BSD 3-Clause License" }
 dependencies = [
@@ -14,6 +14,8 @@ dependencies = [
     "astropy>=6.1",
     "photutils",
     "scipy",
+    "matplotlib",
+    "scikit-image",
 ]
 dynamic = ["version"]
 
@@ -24,4 +26,4 @@ homepage = "https://catch.astro.umd.edu/"
 write_to = "catch_analysis_tools/version.py"
 
 [project.optional-dependencies]
-test = ["pytest", "pytest-remotedata"]
+test = ["pytest", "pytest-remotedata", "tox"]

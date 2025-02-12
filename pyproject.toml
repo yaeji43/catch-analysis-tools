@@ -1,0 +1,27 @@
+[project]
+name = "catch_analysis_tools"
+description = "A package to support analysis tools within the CATCH interface"
+readme = "README.md"
+authors = [
+    { name = "Ben Sharkey", email = "sharkey@umd.edu" },
+    { name = "Michael Kelley", email = "msk@astro.umd.edu"}, 
+    { name = "Yaeji Kim", email = "ykim1231@umd.edu"},
+    { name = "John Dailey", email = "dailey@umd.edu"}
+]
+license = { text = "BSD 3-Clause License" }
+dependencies = [
+    "numpy",
+    "astropy>=6.1",
+    "photutils",
+    "scipy",
+]
+dynamic = ["version"]
+
+[project.urls]
+homepage = "https://catch.astro.umd.edu/"
+
+[tool.setuptools_scm]
+write_to = "catch_analysis_tools/version.py"
+
+[project.optional-dependencies]
+test = ["pytest", "pytest-remotedata"]

@@ -90,7 +90,7 @@ def find_sources(image_sub, bkg_err, snr, aperture_radius=7.0):
     source_list['aperture_sum'] = flux
     source_list['aperture_err'] = flux_err
     source_list = source_list[source_list['aperture_sum'] > 0].reset_index(drop=True)
-    return source_list, telescope_image_sub
+    return source_list, image_sub
 
 
 def load_wcs(output_wcs):

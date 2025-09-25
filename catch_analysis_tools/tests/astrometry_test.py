@@ -57,7 +57,7 @@ def test_run_solve_field_raises_if_subprocess_fails():
     with patch("catch_analysis_tools.astrometry.os.path.exists", return_value=False), \
          patch("catch_analysis_tools.astrometry.subprocess.run", side_effect=subprocess.CalledProcessError(1, "solve-field")):
         with pytest.raises(RuntimeError, match="solve-field failed"):
-            run_solve_field("input.fits", "output.wcs", pixel_scale=1.5)
+            run_solve_field("input.fits", "output.wcs", pixel_scale=1.5, Ra_deg=RA_DEG, Dec_deg=DEC_DEG,)
 
 
 def test_find_sources(synthetic_image):

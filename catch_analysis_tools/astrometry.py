@@ -12,7 +12,7 @@ from astropy.table import Table
 from astropy.coordinates import SkyCoord
 import calviacat as cvc
 
-def run_solve_field(input_fits, output_wcs, pixel_scale, scale_units="arcsecperpix"):
+def run_solve_field(input_fits, output_wcs, pixel_scale, Ra_deg, Dec_deg, scale_units="arcsecperpix"):
     """
     Execute the `solve-field` command to compute a WCS solution.
 
@@ -39,6 +39,9 @@ def run_solve_field(input_fits, output_wcs, pixel_scale, scale_units="arcsecperp
     command = [
         'solve-field',
         '--overwrite',
+        '--ra', str(Ra_deg), 
+        '--dec', str(Dec_deg),
+        '--radius', str(2),
         '--scale-units', scale_units,
         '--scale-low', str(pixel_scale * 0.5),
         '--scale-high', str(pixel_scale * 2.0),
@@ -357,6 +360,8 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Photometric calibration on a background-subtracted image.")
     parser.add_argument("input_fits", help="Path to background-subtracted FITS image")
+    parser.add_argument("--Ra", type=float, required=True, help="RA from CATCH")
+    parser.add_argument("--Dec", type=float, required=True, help="DEC from CATCH")
     parser.add_argument("--bkg_err", type=float, required=True,
                         help="Global background RMS (float, required)")
     parser.add_argument("--pixel_scale", type=float, default=1.86,
@@ -372,6 +377,8 @@ if __name__ == "__main__":
     input_fits  = args.input_fits
     file_base   = os.path.splitext(input_fits)[0]
     image       = fitsio.read(input_fits).astype(np.float32)
+    Ra          = args.Ra
+    Dec         = args.Dec
     bkg_err     = args.bkg_err
     pixel_scale = args.pixel_scale
     snr         = args.snr
@@ -382,7 +389,7 @@ if __name__ == "__main__":
     
     output_wcs = f"{file_base}.wcs"
     try:
-        if run_solve_field(input_fits, output_wcs, pixel_scale):
+        if run_solve_field(input_fits, output_wcs, pixel_scale, Ra, Dec):
             wcs_solution = load_wcs(output_wcs)
         else:
             raise RuntimeError("solve-field did not produce a WCS solution")

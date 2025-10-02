@@ -4,6 +4,9 @@ from unittest.mock import patch, MagicMock
 
 from ..astrometry import *
 
+RA_DEG = 263.0
+DEC_DEG = 34.5
+
 @pytest.fixture
 def synthetic_image():
     image = np.random.normal(loc=0, scale=1.0, size=(100, 100)).astype(np.float32)
@@ -40,7 +43,7 @@ def test_run_solve_field_conditional_execution(file_exists, should_call_run):
     with patch("catch_analysis_tools.astrometry.os.path.exists", return_value=file_exists) as mock_exists, \
          patch("catch_analysis_tools.astrometry.subprocess.run") as mock_run:
         
-        result = run_solve_field("input.fits", "output.wcs", pixel_scale=2.0)
+        result = run_solve_field("input.fits", "output.wcs", pixel_scale=2.0, Ra_deg=RA_DEG, Dec_deg=DEC_DEG,)
 
         assert result is True
         mock_exists.assert_called_once_with("output.wcs")
@@ -54,7 +57,7 @@ def test_run_solve_field_raises_if_subprocess_fails():
     with patch("catch_analysis_tools.astrometry.os.path.exists", return_value=False), \
          patch("catch_analysis_tools.astrometry.subprocess.run", side_effect=subprocess.CalledProcessError(1, "solve-field")):
         with pytest.raises(RuntimeError, match="solve-field failed"):
-            run_solve_field("input.fits", "output.wcs", pixel_scale=1.5)
+            run_solve_field("input.fits", "output.wcs", pixel_scale=1.5, Ra_deg=RA_DEG, Dec_deg=DEC_DEG,)
 
 
 def test_find_sources(synthetic_image):

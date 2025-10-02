@@ -5,7 +5,7 @@ on:
   pull_request:
   workflow_dispatch:
 
-jobs:
+jobs: d
   test:
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v1
     with:

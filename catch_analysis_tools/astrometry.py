@@ -160,7 +160,7 @@ def calibrate_photometry(
     catalog : str, optional
         Name of the photometric catalog class in calviacat (default 'PanSTARRS1').
     obs_band : str, optional
-        Filter of your observed image (e.g. 'g', 'r', 'i'; default 'r').
+        Filter of the observed image (used for labeling and color index only; default: 'obs_band').
     cal_band : str, optional
         Reference catalog filter for color term (e.g. 'g', 'r', 'i'; default 'g').
 
@@ -173,7 +173,7 @@ def calibrate_photometry(
         - unc          : float, uncertainty of zero-point
         - m            : array_like, calibrated magnitudes in the observed band
         - m_inst       : array_like, instrumental magnitudes
-        - obs_band     : str, same as input obs_band
+        - obs_band     : str, label of the observed band
         - cal_band     : str, same as input cal_band
         - color_mags   : array_like, color indices (obs_band - cal_band)
         - color_index  : str, the color string used (e.g. 'r-g')
@@ -370,7 +370,7 @@ if __name__ == "__main__":
                         help="Detection S/N threshold (default: 7.0)")
     parser.add_argument("--catalog", default="PanSTARRS1",
                         help="Photometric reference catalog (default: PanSTARRS1)")
-    parser.add_argument("--obs_band", default="g", help="Observed image bandpass (default: g)")
+    parser.add_argument("--obs_band", default="obs_band", help="Observed image bandpass (used for labeling only; default: 'obs_band')")
     parser.add_argument("--cal_band", default="r", help="Reference catalog bandpass (default: r)")
     args = parser.parse_args()
 

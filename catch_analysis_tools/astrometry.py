@@ -146,7 +146,7 @@ def calibrate_photometry(
     sky_coords,
     source_list,
     catalog: str   = 'PanSTARRS1',
-    obs_band: str  = 'r',
+    obs_band: str  = 'obs_band',
     cal_band: str  = 'g'):
     """
     Calibrate instrumental magnitudes against a Pan-STARRS1 catalog.
@@ -196,7 +196,7 @@ def calibrate_photometry(
     zp, C, unc, m_cal, color_mags, _ = ref.cal_color(
             objids,
             m_inst,
-            obs_band,
+            cal_band,
             color_index,
         )
     return {

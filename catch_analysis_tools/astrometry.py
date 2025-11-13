@@ -146,8 +146,8 @@ def calibrate_photometry(
     sky_coords,
     source_list,
     catalog: str   = 'PanSTARRS1',
-    obs_band: str  = 'obs_band',
-    cal_band: str  = 'g'):
+    cal_band: str  = 'g',
+    color_index: str= "g-r",):
     """
     Calibrate instrumental magnitudes against a Pan-STARRS1 catalog.
 
@@ -159,10 +159,10 @@ def calibrate_photometry(
         Table of detected sources containing 'aperture_sum'.
     catalog : str, optional
         Name of the photometric catalog class in calviacat (default 'PanSTARRS1').
-    obs_band : str, optional
-        Filter of the observed image (used for labeling and color index only; default: 'obs_band').
     cal_band : str, optional
         Reference catalog filter for color term (e.g. 'g', 'r', 'i'; default 'g').
+    color_index : str, optional
+        Color index string used by the calibration (e.g. 'g-r'; default 'g-r').
 
     Returns
     -------
@@ -173,14 +173,12 @@ def calibrate_photometry(
         - unc          : float, uncertainty of zero-point
         - m            : array_like, calibrated magnitudes in the observed band
         - m_inst       : array_like, instrumental magnitudes
-        - obs_band     : str, label of the observed band
         - cal_band     : str, same as input cal_band
         - color_mags   : array_like, color indices (obs_band - cal_band)
         - color_index  : str, the color string used (e.g. 'r-g')
         - objids       : array_like, matched catalog object IDs
         - distances    : array_like, matching distances
     """
-    color_index = f"{obs_band}-{cal_band}"
     
     try:
         CatalogClass = getattr(cvc, catalog)
@@ -205,7 +203,6 @@ def calibrate_photometry(
         'unc'         : unc,
         'm'           : m_cal,
         'm_inst'      : m_inst,
-        'obs_band'    : obs_band,
         'cal_band'    : cal_band,
         'color_mags'  : color_mags,
         'color_index' : color_index,
@@ -288,7 +285,7 @@ def plot_image(telescope_image_sub, source_list, matched_idx, colored_idx):
     return fig, ax
 
 
-def create_header(image, wcs_solution, zp, unc, source_list, matched_idx, colored_idx, input_fits, cal_band: str, catalog: str, obj_band: str):
+def create_header(image, wcs_solution, zp, unc, source_list, matched_idx, colored_idx, input_fits, cal_band: str, catalog: str, color_index: str):
     """
     Create and write a FITS file with calibrated header and source tables.
 
@@ -321,8 +318,7 @@ def create_header(image, wcs_solution, zp, unc, source_list, matched_idx, colore
     primary_hdu.header['ZP_STD'] = unc
     primary_hdu.header['SUV_FLT']  = cal_band
     primary_hdu.header['REF_CATA'] = catalog
-    primary_hdu.header['REF_FLT']  = obj_band
-    primary_hdu.header['CAT_COR']  = f"{cal_band}-{obj_band}"
+    primary_hdu.header['CAT_COR']  = color_index
     source_list_clean = source_list.applymap(lambda x: x.filled(np.nan) if hasattr(x, 'filled') else x)
     detected_hdu = fits.BinTableHDU(Table.from_pandas(source_list_clean), name='DETECTED_SOURCES')
     if not source_list_clean.empty:
@@ -370,8 +366,8 @@ if __name__ == "__main__":
                         help="Detection S/N threshold (default: 7.0)")
     parser.add_argument("--catalog", default="PanSTARRS1",
                         help="Photometric reference catalog (default: PanSTARRS1)")
-    parser.add_argument("--obs_band", default="obs_band", help="Observed image bandpass (used for labeling only; default: 'obs_band')")
     parser.add_argument("--cal_band", default="r", help="Reference catalog bandpass (default: r)")
+    parser.add_argument("--color_index", default="g-r", help=" Indices of sources selected for color correction. (default: g-r)")
     args = parser.parse_args()
 
     input_fits  = args.input_fits
@@ -383,8 +379,8 @@ if __name__ == "__main__":
     pixel_scale = args.pixel_scale
     snr         = args.snr
     catalog     = args.catalog
-    obs_band    = args.obs_band
     cal_band    = args.cal_band
+    color_index = args.color_index
  
     
     output_wcs = f"{file_base}.wcs"
@@ -402,8 +398,8 @@ if __name__ == "__main__":
         sky_coords,
         source_list,
         catalog=catalog,
-        obs_band=obs_band,
         cal_band=cal_band,
+        color_index = color_index,
     )
     zp     = calibration["zp"]
     C      = calibration["C"]
@@ -436,9 +432,9 @@ if __name__ == "__main__":
         matched_idx,
         colored_idx,
         input_fits,         
-        obs_band,
         catalog,
         cal_band,
+        color_index,
     )
 
     cleanup_files(file_base)

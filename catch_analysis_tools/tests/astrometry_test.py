@@ -39,6 +39,29 @@ def synthetic_wcs():
     (False, True),  # WCS doesn't exist → run solve-field
 ])
 
+@pytest.mark.integration
+def test_run_solve_field_real(tmp_path):
+    import fitsio
+
+    # Create a small synthetic FITS file
+    image = np.random.normal(1000, 10, (100, 100)).astype(np.float32)
+    input_fits = tmp_path / "test.fits"
+    fitsio.write(str(input_fits), image, clobber=True)
+
+    output_wcs = tmp_path / "test.wcs"
+
+    # Run solve-field
+    assert run_solve_field(
+        input_fits=str(input_fits),
+        output_wcs=str(output_wcs),
+        pixel_scale=1.8,
+        Ra_deg=263.0,
+        Dec_deg=34.5,
+    )
+
+    # Check output WCS file exists
+    assert output_wcs.exists()
+
 def test_run_solve_field_conditional_execution(file_exists, should_call_run):
     with patch("catch_analysis_tools.astrometry.os.path.exists", return_value=file_exists) as mock_exists, \
          patch("catch_analysis_tools.astrometry.subprocess.run") as mock_run:

@@ -40,7 +40,6 @@ test = [
 
 [tool.pytest.ini_options]
 addopts = "--cov=catch_analysis_tools --cov-report=term-missing"
-testpaths = ["tests"]
 markers = [
     "integration: tests that run solve-field and require astrometry.net index files"
 ]

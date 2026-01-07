@@ -9,7 +9,7 @@ on:
 env:
   PYTHON_VERSION: "3.11"
   INDEX_CACHE_VERSION: "v1"
-  ASTROMETRY_INDEX_DIR: ~/.astrometry/data
+  ASTROMETRY_INDEX_DIR: ${{ github.workspace }}/.astrometry/data
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -67,7 +67,7 @@ jobs:
         - name: Configure astrometry.net index path
           run: |
             mkdir -p ~/.astrometry
-            echo "add_path ${{ env.ASTROMETRY_INDEX_DIR }}" > ~/.astrometry/config
+            echo "add_path ${ASTROMETRY_INDEX_DIR}" > ~/.astrometry/config
 
         - name: Export astrometry environment variables
           run: |

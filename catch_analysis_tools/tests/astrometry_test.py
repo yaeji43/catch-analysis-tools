@@ -1,6 +1,7 @@
 import pytest
 import shutil
 import tempfile
+from pathlib import Path
 from unittest.mock import patch, MagicMock
 
 from ..astrometry import *
@@ -42,23 +43,11 @@ def synthetic_wcs():
     "ASTROMETRY_CONFIG" not in os.environ,
     reason="solve-field or astrometry config not available"
 )
-
 def test_run_solve_field_real(tmp_path):
-    import fitsio
 
-    # Create a small synthetic FITS file
-    image = np.random.normal(1000, 10, (512, 512)).astype(np.float32)
-    rng = np.random.default_rng(42)
-    image = rng.normal(1000, 5, (512, 512)).astype(np.float32)
-
-    for _ in range(20):
-        x, y = rng.integers(50, 462, size=2)
-        for i in range(-2, 3):
-            for j in range(-2, 3):
-                image[y + j, x + i] += 500 * np.exp(-(i**2 + j**2) / 2.0)
-
-    input_fits = tmp_path / "test.fits"
-    fitsio.write(str(input_fits), image, clobber=True)
+    # Use a real sky FITS image committed to the repo
+    input_fits = Path(__file__).parent / "data" / "real_sky.fits"
+    assert input_fits.exists(), "real_sky.fits test image is missing"
 
     output_wcs = tmp_path / "test.wcs"
 
@@ -66,9 +55,9 @@ def test_run_solve_field_real(tmp_path):
     assert run_solve_field(
         input_fits=str(input_fits),
         output_wcs=str(output_wcs),
-        pixel_scale=1.8,
-        Ra_deg=263.0,
-        Dec_deg=34.5,
+        pixel_scale=0.25,
+        Ra_deg=180.0,
+        Dec_deg=2.0,
     )
 
     # Check output WCS file exists

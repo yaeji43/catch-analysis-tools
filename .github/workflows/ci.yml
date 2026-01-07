@@ -51,6 +51,7 @@ jobs:
             mkdir -p ${{ env.ASTROMETRY_INDEX_DIR }}
             wget -P ${{ env.ASTROMETRY_INDEX_DIR }} http://data.astrometry.net/4200/index-4200-00.fits
             wget -P ${{ env.ASTROMETRY_INDEX_DIR }} http://data.astrometry.net/4200/index-4201-00.fits
+            wget -P ${{ env.ASTROMETRY_INDEX_DIR }} http://data.astrometry.net/4100/index-4107-00.fits
 
         - name: Save index cache
           if: steps.restore-index.outputs.cache-hit != 'true'

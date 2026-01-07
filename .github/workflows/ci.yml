@@ -8,7 +8,7 @@ on:
 
 env:
   PYTHON_VERSION: "3.11"
-  INDEX_CACHE_VERSION: "v2"
+  INDEX_CACHE_VERSION: "v3"
   ASTROMETRY_INDEX_DIR: ${{ github.workspace }}/.astrometry/data
 
 concurrency:
@@ -51,7 +51,8 @@ jobs:
             mkdir -p ${{ env.ASTROMETRY_INDEX_DIR }}
             wget -P ${{ env.ASTROMETRY_INDEX_DIR }} http://data.astrometry.net/4200/index-4200-00.fits
             wget -P ${{ env.ASTROMETRY_INDEX_DIR }} http://data.astrometry.net/4200/index-4201-00.fits
-            wget -P ${{ env.ASTROMETRY_INDEX_DIR }} http://data.astrometry.net/4100/index-4107-00.fits
+            wget -P ${{ env.ASTROMETRY_INDEX_DIR }} http://data.astrometry.net/4200/index-4202-00.fits
+            wget -P ${{ env.ASTROMETRY_INDEX_DIR }} http://data.astrometry.net/4100/index-4107.fits
 
         - name: Save index cache
           if: steps.restore-index.outputs.cache-hit != 'true'

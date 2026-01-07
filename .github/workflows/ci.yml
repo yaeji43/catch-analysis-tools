@@ -61,7 +61,17 @@ jobs:
 
         - name: Install system dependencies
           run: |
+            sudo apt update
             sudo apt install -y astrometry.net netpbm
+
+        - name: Configure astrometry.net index path
+          run: |
+            mkdir -p ~/.astrometry
+            echo "add_path ${{ env.ASTROMETRY_INDEX_DIR }}" > ~/.astrometry/config
+
+        - name: Export astrometry environment variables
+          run: |
+            echo "ASTROMETRY_DATA_DIR=${{ env.ASTROMETRY_INDEX_DIR }}" >> $GITHUB_ENV
 
         - name: Install Python dependencies
           run: |

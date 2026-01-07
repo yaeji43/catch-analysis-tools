@@ -69,6 +69,10 @@ jobs:
             mkdir -p ~/.astrometry
             echo "add_path ${ASTROMETRY_INDEX_DIR}" > ~/.astrometry/config
 
+        - name: Force astrometry to use user config
+          run: |
+            echo "ASTROMETRY_CONFIG=$HOME/.astrometry/config" >> $GITHUB_ENV
+
         - name: Export astrometry environment variables
           run: |
             echo "ASTROMETRY_DATA_DIR=${{ env.ASTROMETRY_INDEX_DIR }}" >> $GITHUB_ENV

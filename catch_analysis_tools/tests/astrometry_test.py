@@ -38,8 +38,9 @@ def synthetic_wcs():
 
 @pytest.mark.integration
 @pytest.mark.skipif(
-    shutil.which("solve-field") is None,
-    reason="solve-field not available"
+    shutil.which("solve-field") is None or
+    "ASTROMETRY_DATA_DIR" not in os.environ,
+    reason="solve-field or astrometry index directory not available"
 )
 def test_run_solve_field_real(tmp_path):
     import fitsio

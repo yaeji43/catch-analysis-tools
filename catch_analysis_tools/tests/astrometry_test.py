@@ -78,9 +78,7 @@ def test_run_solve_field_real(tmp_path):
     (False, True),
 ])
 def test_run_solve_field_conditional_execution(file_exists, should_call_run):
-    with patch.dict(os.environ, {"ASTROMETRY_DATA_DIR": "/fake/index/dir"}), \
-         patch("catch_analysis_tools.astrometry.glob.glob",
-               return_value=["/fake/index/dir/index-4200-00.fits"]), \
+    with patch.dict(os.environ, {"ASTROMETRY_CONFIG": "/fake/astrometry/config"}), \
          patch("catch_analysis_tools.astrometry.os.path.exists",
                return_value=file_exists) as mock_exists, \
          patch("catch_analysis_tools.astrometry.subprocess.run") as mock_run:
@@ -103,9 +101,7 @@ def test_run_solve_field_conditional_execution(file_exists, should_call_run):
 
 
 def test_run_solve_field_raises_if_subprocess_fails():
-    with patch.dict(os.environ, {"ASTROMETRY_DATA_DIR": "/fake/index/dir"}), \
-         patch("catch_analysis_tools.astrometry.glob.glob",
-               return_value=["/fake/index/dir/index-4200-00.fits"]), \
+    with patch.dict(os.environ, {"ASTROMETRY_CONFIG": "/fake/astrometry/config"}), \
          patch("catch_analysis_tools.astrometry.os.path.exists",
                return_value=False), \
          patch(
@@ -121,6 +117,7 @@ def test_run_solve_field_raises_if_subprocess_fails():
                 Ra_deg=RA_DEG,
                 Dec_deg=DEC_DEG,
             )
+
 
 def test_find_sources(synthetic_image):
     bkg_err, snr = 1.0, 5.0

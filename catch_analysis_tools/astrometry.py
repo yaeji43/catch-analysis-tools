@@ -37,28 +37,17 @@ def run_solve_field(input_fits, output_wcs, pixel_scale, Ra_deg, Dec_deg, scale_
         print(f"Output file '{output_wcs}' already exists. Skipping solve-field execution.")          
         return True
     
-    index_dir = os.environ.get("ASTROMETRY_DATA_DIR")
-    if index_dir is None:
+    config_file = os.environ.get("ASTROMETRY_CONFIG")
+    if config_file is None:
         raise RuntimeError(
-            "ASTROMETRY_DATA_DIR is not set. "
+            "ASTROMETRY_CONFIG is not set. "
             "This is required to run solve-field."
         )
-
-    index_files = sorted(glob.glob(os.path.join(index_dir, "index-*.fits")))
-
-    if not index_files:
-        raise RuntimeError(f"No index files found in {index_dir}")
-
 
     command = [
         "solve-field",
         "--overwrite",
-    ]
-
-    for idx in index_files:
-        command += ["--index-file", idx]
-
-    command += [
+        "--config", config_file,
         "--ra", str(Ra_deg),
         "--dec", str(Dec_deg),
         "--radius", "2",

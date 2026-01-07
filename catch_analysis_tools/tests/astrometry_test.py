@@ -1,4 +1,5 @@
 import pytest
+import shutil
 import tempfile
 from unittest.mock import patch, MagicMock
 

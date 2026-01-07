@@ -67,7 +67,6 @@ def test_run_solve_field_real(tmp_path):
         pixel_scale=1.8,
         Ra_deg=263.0,
         Dec_deg=34.5,
-        radius=5.0,  
     )
 
     # Check output WCS file exists

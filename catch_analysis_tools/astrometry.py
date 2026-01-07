@@ -46,7 +46,7 @@ def run_solve_field(input_fits, output_wcs, pixel_scale, Ra_deg, Dec_deg, scale_
     command = [
         'solve-field',
         '--overwrite',
-        '--index-dir', index_dir],
+        '--index-dir', index_dir,
         '--ra', str(Ra_deg), 
         '--dec', str(Dec_deg),
         '--radius', str(2),

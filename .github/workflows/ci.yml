@@ -49,9 +49,9 @@ jobs:
           if: steps.restore-index.outputs.cache-hit != 'true'
           run: |
             mkdir -p ${{ env.ASTROMETRY_INDEX_DIR }}
-            wget -P ${{ env.ASTROMETRY_INDEX_DIR }} http://data.astrometry.net/5200/index-5200-00.fits
-            wget -P ${{ env.ASTROMETRY_INDEX_DIR }} http://data.astrometry.net/5200/index-5201-00.fits
-            wget -P ${{ env.ASTROMETRY_INDEX_DIR }} http://data.astrometry.net/5200/index-5202-00.fits
+            wget -P ${{ env.ASTROMETRY_INDEX_DIR }} https://portal.nersc.gov/project/cosmo/temp/dstn/index-5200/LITE/index-5200-00.fits
+            wget -P ${{ env.ASTROMETRY_INDEX_DIR }} https://portal.nersc.gov/project/cosmo/temp/dstn/index-5200/LITE/index-5201-00.fits
+            wget -P ${{ env.ASTROMETRY_INDEX_DIR }} https://portal.nersc.gov/project/cosmo/temp/dstn/index-5200/LITE/index-5202-00.fits
 
         - name: Save index cache
           if: steps.restore-index.outputs.cache-hit != 'true'

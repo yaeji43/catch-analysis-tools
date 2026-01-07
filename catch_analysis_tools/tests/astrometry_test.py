@@ -78,7 +78,7 @@ def test_run_solve_field_real(tmp_path):
     (False, True),  # WCS doesn't exist → run solve-field
 ])
 def test_run_solve_field_conditional_execution(file_exists, should_call_run):
-    with patch.dict(os.environ, {"ASTROMETRY_CONFIG": "/fake/config"}), \
+    with patch.dict(os.environ, {"ASTROMETRY_DATA_DIR": "/fake/index/dir"}), \
          patch("catch_analysis_tools.astrometry.os.path.exists", return_value=file_exists) as mock_exists, \
          patch("catch_analysis_tools.astrometry.subprocess.run") as mock_run:
         
@@ -93,7 +93,7 @@ def test_run_solve_field_conditional_execution(file_exists, should_call_run):
 
 
 def test_run_solve_field_raises_if_subprocess_fails():
-    with patch.dict(os.environ, {"ASTROMETRY_CONFIG": "/fake/config"}), \
+    with patch.dict(os.environ, {"ASTROMETRY_DATA_DIR": "/fake/index/dir"}), \
          patch("catch_analysis_tools.astrometry.os.path.exists", return_value=False), \
          patch("catch_analysis_tools.astrometry.subprocess.run", side_effect=subprocess.CalledProcessError(1, "solve-field")):
         with pytest.raises(RuntimeError, match="solve-field failed"):

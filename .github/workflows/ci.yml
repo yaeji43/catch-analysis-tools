@@ -64,10 +64,13 @@ jobs:
             sudo apt update
             sudo apt install -y astrometry.net netpbm
 
-        - name: Configure astrometry.net index path
+        - name: Configure astrometry.net index files
           run: |
             mkdir -p ~/.astrometry
-            echo "add_path ${ASTROMETRY_INDEX_DIR}" > ~/.astrometry/config
+            : > ~/.astrometry/config
+            for f in ${ASTROMETRY_INDEX_DIR}/index-*.fits; do
+              printf 'index %s\n' "$f" >> ~/.astrometry/config
+            done
 
         - name: Force astrometry to use user config
           run: |

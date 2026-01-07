@@ -82,6 +82,11 @@ jobs:
             python -m pip install -U pip setuptools wheel
             pip install -e .[test,recommended]
 
+        - name: Debug astrometry index visibility
+          run: |
+            echo "ASTROMETRY_DATA_DIR=$ASTROMETRY_DATA_DIR"
+            ls -lh $ASTROMETRY_DATA_DIR
+
         - name: Run astrometric calibration tests
           run: |
             export PYTHONPATH=${PYTHONPATH}:$(pwd)

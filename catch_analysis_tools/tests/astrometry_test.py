@@ -74,18 +74,28 @@ def test_run_solve_field_real(tmp_path):
     assert output_wcs.exists()
 
 @pytest.mark.parametrize("file_exists, should_call_run", [
-    (True, False),  # WCS already exists → skip
-    (False, True),  # WCS doesn't exist → run solve-field
+    (True, False),
+    (False, True),
 ])
 def test_run_solve_field_conditional_execution(file_exists, should_call_run):
     with patch.dict(os.environ, {"ASTROMETRY_DATA_DIR": "/fake/index/dir"}), \
-         patch("catch_analysis_tools.astrometry.os.path.exists", return_value=file_exists) as mock_exists, \
+         patch("catch_analysis_tools.astrometry.glob.glob",
+               return_value=["/fake/index/dir/index-4200-00.fits"]), \
+         patch("catch_analysis_tools.astrometry.os.path.exists",
+               return_value=file_exists) as mock_exists, \
          patch("catch_analysis_tools.astrometry.subprocess.run") as mock_run:
-        
-        result = run_solve_field("input.fits", "output.wcs", pixel_scale=2.0, Ra_deg=RA_DEG, Dec_deg=DEC_DEG,)
+
+        result = run_solve_field(
+            "input.fits",
+            "output.wcs",
+            pixel_scale=2.0,
+            Ra_deg=RA_DEG,
+            Dec_deg=DEC_DEG,
+        )
 
         assert result is True
         mock_exists.assert_called_once_with("output.wcs")
+
         if should_call_run:
             mock_run.assert_called_once()
         else:
@@ -94,11 +104,23 @@ def test_run_solve_field_conditional_execution(file_exists, should_call_run):
 
 def test_run_solve_field_raises_if_subprocess_fails():
     with patch.dict(os.environ, {"ASTROMETRY_DATA_DIR": "/fake/index/dir"}), \
-         patch("catch_analysis_tools.astrometry.os.path.exists", return_value=False), \
-         patch("catch_analysis_tools.astrometry.subprocess.run", side_effect=subprocess.CalledProcessError(1, "solve-field")):
-        with pytest.raises(RuntimeError, match="solve-field failed"):
-            run_solve_field("input.fits", "output.wcs", pixel_scale=1.5, Ra_deg=RA_DEG, Dec_deg=DEC_DEG,)
+         patch("catch_analysis_tools.astrometry.glob.glob",
+               return_value=["/fake/index/dir/index-4200-00.fits"]), \
+         patch("catch_analysis_tools.astrometry.os.path.exists",
+               return_value=False), \
+         patch(
+             "catch_analysis_tools.astrometry.subprocess.run",
+             side_effect=subprocess.CalledProcessError(1, "solve-field")
+         ):
 
+        with pytest.raises(RuntimeError, match="solve-field failed"):
+            run_solve_field(
+                "input.fits",
+                "output.wcs",
+                pixel_scale=1.5,
+                Ra_deg=RA_DEG,
+                Dec_deg=DEC_DEG,
+            )
 
 def test_find_sources(synthetic_image):
     bkg_err, snr = 1.0, 5.0

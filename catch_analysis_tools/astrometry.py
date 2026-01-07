@@ -49,7 +49,6 @@ def run_solve_field(input_fits, output_wcs, pixel_scale, Ra_deg, Dec_deg, scale_
         "--overwrite",
         "--config", config_file,
         "--guess-scale",
-        "--guess-ra-dec",
         "--depth", "200",
         "--scale-units", scale_units,
         "--scale-low", str(pixel_scale * 0.3),

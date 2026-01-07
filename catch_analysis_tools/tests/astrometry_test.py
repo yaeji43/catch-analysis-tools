@@ -34,12 +34,12 @@ def synthetic_wcs():
     header['CD2_2'] = 0.000277778
     return WCS(header)
 
-@pytest.mark.parametrize("file_exists, should_call_run", [
-    (True, False),  # WCS already exists → skip
-    (False, True),  # WCS doesn't exist → run solve-field
-])
 
 @pytest.mark.integration
+@pytest.mark.skipif(
+    shutil.which("solve-field") is None,
+    reason="solve-field not available"
+)
 def test_run_solve_field_real(tmp_path):
     import fitsio
 
@@ -62,6 +62,10 @@ def test_run_solve_field_real(tmp_path):
     # Check output WCS file exists
     assert output_wcs.exists()
 
+@pytest.mark.parametrize("file_exists, should_call_run", [
+    (True, False),  # WCS already exists → skip
+    (False, True),  # WCS doesn't exist → run solve-field
+])
 def test_run_solve_field_conditional_execution(file_exists, should_call_run):
     with patch("catch_analysis_tools.astrometry.os.path.exists", return_value=file_exists) as mock_exists, \
          patch("catch_analysis_tools.astrometry.subprocess.run") as mock_run:

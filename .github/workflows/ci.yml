@@ -8,7 +8,7 @@ on:
 
 env:
   PYTHON_VERSION: "3.11"
-  INDEX_CACHE_VERSION: "v7"
+  INDEX_CACHE_VERSION: "v8"
   ASTROMETRY_INDEX_DIR: ${{ github.workspace }}/.astrometry/data
 
 concurrency:
@@ -49,7 +49,7 @@ jobs:
           if: steps.restore-index.outputs.cache-hit != 'true'
           run: |
             mkdir -p ${{ env.ASTROMETRY_INDEX_DIR }}
-            for i in $(seq -w 30 40); do
+            for i in $(seq -w 20 35); do
               wget -nv -P ${{ env.ASTROMETRY_INDEX_DIR }} \
                 https://portal.nersc.gov/project/cosmo/temp/dstn/index-5200/index-5201-$i.fits
             done

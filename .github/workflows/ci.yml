@@ -51,7 +51,7 @@ jobs:
             mkdir -p ${{ env.ASTROMETRY_INDEX_DIR }}
             for i in $(seq -w 30 40); do
               wget -nv -P ${{ env.ASTROMETRY_INDEX_DIR }} \
-                https://portal.nersc.gov/project/cosmo/temp/dstn/index-5201/LITE/index-5201-$i.fits
+                https://portal.nersc.gov/project/cosmo/temp/dstn/index-5200/index-5201-$i.fits
             done
 
         - name: Save index cache

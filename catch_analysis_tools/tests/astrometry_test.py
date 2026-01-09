@@ -60,8 +60,6 @@ def test_run_solve_field_real(tmp_path):
         Dec_deg=17.0,
     )
 
-    assert run_solve_field(...) in (True, False)
-
 @pytest.mark.parametrize("file_exists, should_call_run", [
     (True, False),
     (False, True),

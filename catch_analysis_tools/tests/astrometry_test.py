@@ -46,8 +46,8 @@ def synthetic_wcs():
 def test_run_solve_field_real(tmp_path):
 
     # Use a real sky FITS image committed to the repo
-    input_fits = Path(__file__).parent / "data" / "real_sky.fits"
-    assert input_fits.exists(), "real_sky.fits test image is missing"
+    input_fits = Path(__file__).parent / "data" / "test.fits"
+    assert input_fits.exists(), "test.fits test image is missing"
 
     output_wcs = tmp_path / "test.wcs"
 

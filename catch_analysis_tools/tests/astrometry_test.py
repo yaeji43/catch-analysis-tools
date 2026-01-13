@@ -1,5 +1,7 @@
 import pytest
+import shutil
 import tempfile
+from pathlib import Path
 from unittest.mock import patch, MagicMock
 
 from ..astrometry import *
@@ -34,19 +36,51 @@ def synthetic_wcs():
     header['CD2_2'] = 0.000277778
     return WCS(header)
 
-@pytest.mark.parametrize("file_exists, should_call_run", [
-    (True, False),  # WCS already exists → skip
-    (False, True),  # WCS doesn't exist → run solve-field
-])
 
+@pytest.mark.integration
+@pytest.mark.skipif(
+    shutil.which("solve-field") is None or
+    "ASTROMETRY_CONFIG" not in os.environ,
+    reason="solve-field or astrometry config not available"
+)
+def test_run_solve_field_real(tmp_path):
+
+    # Use a real sky FITS image committed to the repo
+    input_fits = Path(__file__).parent / "data" / "Comet_65P_Gunn_LONEOS.fits"
+    assert input_fits.exists(), "test image is missing"
+
+    output_wcs = tmp_path / "test.wcs"
+
+    # Run solve-field
+    assert run_solve_field(
+        input_fits=str(input_fits),
+        output_wcs=str(output_wcs),
+        pixel_scale=2.4,
+        Ra_deg=51.0,
+        Dec_deg=17.0,
+    )
+
+@pytest.mark.parametrize("file_exists, should_call_run", [
+    (True, False),
+    (False, True),
+])
 def test_run_solve_field_conditional_execution(file_exists, should_call_run):
-    with patch("catch_analysis_tools.astrometry.os.path.exists", return_value=file_exists) as mock_exists, \
+    with patch.dict(os.environ, {"ASTROMETRY_CONFIG": "/fake/astrometry/config"}), \
+         patch("catch_analysis_tools.astrometry.os.path.exists",
+               return_value=file_exists) as mock_exists, \
          patch("catch_analysis_tools.astrometry.subprocess.run") as mock_run:
-        
-        result = run_solve_field("input.fits", "output.wcs", pixel_scale=2.0, Ra_deg=RA_DEG, Dec_deg=DEC_DEG,)
+
+        result = run_solve_field(
+            "input.fits",
+            "output.wcs",
+            pixel_scale=2.0,
+            Ra_deg=RA_DEG,
+            Dec_deg=DEC_DEG,
+        )
 
         assert result is True
         mock_exists.assert_called_once_with("output.wcs")
+
         if should_call_run:
             mock_run.assert_called_once()
         else:
@@ -54,10 +88,22 @@ def test_run_solve_field_conditional_execution(file_exists, should_call_run):
 
 
 def test_run_solve_field_raises_if_subprocess_fails():
-    with patch("catch_analysis_tools.astrometry.os.path.exists", return_value=False), \
-         patch("catch_analysis_tools.astrometry.subprocess.run", side_effect=subprocess.CalledProcessError(1, "solve-field")):
+    with patch.dict(os.environ, {"ASTROMETRY_CONFIG": "/fake/astrometry/config"}), \
+         patch("catch_analysis_tools.astrometry.os.path.exists",
+               return_value=False), \
+         patch(
+             "catch_analysis_tools.astrometry.subprocess.run",
+             side_effect=subprocess.CalledProcessError(1, "solve-field")
+         ):
+
         with pytest.raises(RuntimeError, match="solve-field failed"):
-            run_solve_field("input.fits", "output.wcs", pixel_scale=1.5, Ra_deg=RA_DEG, Dec_deg=DEC_DEG,)
+            run_solve_field(
+                "input.fits",
+                "output.wcs",
+                pixel_scale=1.5,
+                Ra_deg=RA_DEG,
+                Dec_deg=DEC_DEG,
+            )
 
 
 def test_find_sources(synthetic_image):

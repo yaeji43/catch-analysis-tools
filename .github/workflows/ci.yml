@@ -1,13 +1,103 @@
-name: Run continuous integration testing
+name: Run continuous integration testing & Astrometry Calibration Tests
 
 on:
   push:
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
+env:
+  PYTHON_VERSION: "3.11"
+  INDEX_CACHE_VERSION: "v9"
+  ASTROMETRY_INDEX_DIR: ${{ github.workspace }}/.astrometry/data
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  test:
+  tox:
+    name: Tox test suite
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v1
     with:
       envs: |
         - linux: py312-test
+
+  ac-tests:
+      name: Astrometric Calibration Tests
+      runs-on: ubuntu-latest
+      needs: [tox]
+
+      steps:
+        - name: Checkout repository
+          uses: actions/checkout@v4
+
+        - name: Set up Python
+          id: setup-python
+          uses: actions/setup-python@v5
+          with:
+            python-version: "${{ env.PYTHON_VERSION }}"
+
+        - name: Restore astrometry index cache
+          uses: actions/cache/restore@v4
+          id: restore-index
+          with:
+            key: astrometry-index-${{ env.INDEX_CACHE_VERSION }}
+            path: ${{ env.ASTROMETRY_INDEX_DIR }}
+
+        - name: Download index files (if cache missing)
+          if: steps.restore-index.outputs.cache-hit != 'true'
+          run: |
+            set -e
+            for i in 00 01 02 03 04 05 06 07; do
+              wget -nv -P ${{ env.ASTROMETRY_INDEX_DIR }} \
+                https://portal.nersc.gov/project/cosmo/temp/dstn/index-5200/index-5204-$i.fits
+            done
+
+        - name: Save index cache
+          if: steps.restore-index.outputs.cache-hit != 'true'
+          uses: actions/cache/save@v4
+          with:
+            key: astrometry-index-${{ env.INDEX_CACHE_VERSION }}
+            path: ${{ env.ASTROMETRY_INDEX_DIR }}
+
+        - name: Install system dependencies
+          run: |
+            sudo apt update
+            sudo apt install -y astrometry.net netpbm
+
+        - name: Configure astrometry.net index files
+          run: |
+            mkdir -p ~/.astrometry
+            : > ~/.astrometry/config
+            for f in ${ASTROMETRY_INDEX_DIR}/index-*.fits; do
+              printf 'index %s\n' "$f" >> ~/.astrometry/config
+            done
+
+        - name: Force astrometry to use user config
+          run: |
+            echo "ASTROMETRY_CONFIG=$HOME/.astrometry/config" >> $GITHUB_ENV
+
+        - name: Export astrometry environment variables
+          run: |
+            echo "ASTROMETRY_DATA_DIR=${{ env.ASTROMETRY_INDEX_DIR }}" >> $GITHUB_ENV
+
+        - name: Install Python dependencies
+          run: |
+            python -m pip install -U pip setuptools wheel
+            pip install -e .[test,recommended]
+
+        - name: Debug astrometry index visibility
+          run: |
+            echo "ASTROMETRY_DATA_DIR=$ASTROMETRY_DATA_DIR"
+            ls -lh $ASTROMETRY_DATA_DIR
+
+        - name: Run astrometric calibration tests
+          run: |
+            export PYTHONPATH=${PYTHONPATH}:$(pwd)
+            pytest -v --maxfail=3 --disable-warnings --cov-report=xml
+
+        - name: Upload coverage report
+          uses: codecov/codecov-action@v4
+          with:
+            token: ${{ secrets.CODECOV_TOKEN }}

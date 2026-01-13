@@ -31,4 +31,15 @@ homepage = "https://catch.astro.umd.edu/"
 write_to = "catch_analysis_tools/version.py"
 
 [project.optional-dependencies]
-test = ["pytest", "pytest-remotedata", "tox"]
+test = [
+    "pytest",
+    "pytest-remotedata",
+    "pytest-cov",   
+    "tox"
+]
+
+[tool.pytest.ini_options]
+addopts = "--cov=catch_analysis_tools --cov-report=term-missing"
+markers = [
+    "integration: tests that run solve-field and require astrometry.net index files"
+]

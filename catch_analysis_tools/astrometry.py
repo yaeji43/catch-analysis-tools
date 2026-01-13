@@ -1,4 +1,5 @@
 import os
+import glob
 import subprocess
 import argparse
 import numpy as np
@@ -36,17 +37,27 @@ def run_solve_field(input_fits, output_wcs, pixel_scale, Ra_deg, Dec_deg, scale_
         print(f"Output file '{output_wcs}' already exists. Skipping solve-field execution.")          
         return True
     
+    config_file = os.environ.get("ASTROMETRY_CONFIG")
+    if config_file is None:
+        raise RuntimeError(
+            "ASTROMETRY_CONFIG is not set. "
+            "This is required to run solve-field."
+        )
+
     command = [
-        'solve-field',
-        '--overwrite',
-        '--ra', str(Ra_deg), 
-        '--dec', str(Dec_deg),
-        '--radius', str(2),
-        '--scale-units', scale_units,
-        '--scale-low', str(pixel_scale * 0.5),
-        '--scale-high', str(pixel_scale * 2.0),
-        input_fits
+        "solve-field",
+        "--overwrite",
+        "--config", config_file,
+        "--ra", str(Ra_deg),
+        "--dec", str(Dec_deg),
+        "--scale-units", scale_units,
+        "--scale-low", str(pixel_scale * 0.5),
+        "--scale-high", str(pixel_scale * 2.0),
+        "--radius", "2",
+        "--downsample", "1",
+        input_fits,
     ]
+
     try:
         subprocess.run(command, check=True)
         return True
@@ -146,7 +157,7 @@ def calibrate_photometry(
     sky_coords,
     source_list,
     catalog: str   = 'PanSTARRS1',
-    obs_band: str  = 'r',
+    obs_band: str  = 'obs_band',
     cal_band: str  = 'g'):
     """
     Calibrate instrumental magnitudes against a Pan-STARRS1 catalog.
@@ -160,7 +171,7 @@ def calibrate_photometry(
     catalog : str, optional
         Name of the photometric catalog class in calviacat (default 'PanSTARRS1').
     obs_band : str, optional
-        Filter of your observed image (e.g. 'g', 'r', 'i'; default 'r').
+        Filter of the observed image (used for labeling and color index only; default: 'obs_band').
     cal_band : str, optional
         Reference catalog filter for color term (e.g. 'g', 'r', 'i'; default 'g').
 
@@ -173,7 +184,7 @@ def calibrate_photometry(
         - unc          : float, uncertainty of zero-point
         - m            : array_like, calibrated magnitudes in the observed band
         - m_inst       : array_like, instrumental magnitudes
-        - obs_band     : str, same as input obs_band
+        - obs_band     : str, label of the observed band
         - cal_band     : str, same as input cal_band
         - color_mags   : array_like, color indices (obs_band - cal_band)
         - color_index  : str, the color string used (e.g. 'r-g')
@@ -196,7 +207,7 @@ def calibrate_photometry(
     zp, C, unc, m_cal, color_mags, _ = ref.cal_color(
             objids,
             m_inst,
-            obs_band,
+            cal_band,
             color_index,
         )
     return {
@@ -370,7 +381,7 @@ if __name__ == "__main__":
                         help="Detection S/N threshold (default: 7.0)")
     parser.add_argument("--catalog", default="PanSTARRS1",
                         help="Photometric reference catalog (default: PanSTARRS1)")
-    parser.add_argument("--obs_band", default="g", help="Observed image bandpass (default: g)")
+    parser.add_argument("--obs_band", default="obs_band", help="Observed image bandpass (used for labeling only; default: 'obs_band')")
     parser.add_argument("--cal_band", default="r", help="Reference catalog bandpass (default: r)")
     args = parser.parse_args()
 

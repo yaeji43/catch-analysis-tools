@@ -23,3 +23,16 @@ Replacing 312 with something appropriate for your system.  A list of all testing
 ```
 tox -l
 ```
+
+
+## Hosting
+
+The CAT may be run as a containerized service, hosted locally or by AWS Fargate.
+
+### Local
+
+Running locally will install the currently checked out version of the CAT.
+
+1. Copy env-template to .env and edit.
+    a. Set TF_VAR_CAT_DEPLOYMENT="local"
+2. bash _docker

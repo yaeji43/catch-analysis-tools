@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+#
+# This script intentionally echoes the exact Docker commands it runs.
+# Seeing the full command string helps keep the workflow transparent
+# and avoids the "black box" feeling of wrapper scripts.
+
+set -euo pipefail
+IFS=$'\n\t'
+
+# Enable BuildKit for faster and more efficient Docker builds.
+# First run: docker buildx install
+export DOCKER_BUILDKIT=1
+
+if [[ ! -f ".env" ]]; then
+  echo "Missing .env file. Copy .env-template and configure required values." >&2
+  exit 1
+fi
+
+if ! command -v docker >/dev/null 2>&1; then
+  echo "Docker command not found. Install Docker and try again." >&2
+  exit 1
+fi
+
+highlight() {
+  printf '\033[1;36m%s\033[0m\n' "$1"
+}
+
+# shellcheck disable=SC1091
+source .env
+
+required_vars=(DOCKER_IMAGE_NAME DOCKER_IMAGE_TAG TF_VAR_CAT_ARCHITECTURE  TF_VAR_CAT_DEPLOYMENT)
+for var in "${required_vars[@]}"; do
+  if [[ -z "${!var:-}" ]]; then
+    echo "${var} must be set in .env" >&2
+    exit 1
+  fi
+done
+
+cat_arch="${TF_VAR_CAT_ARCHITECTURE}"
+build_platform="linux/amd64"
+if [[ "${cat_arch}" == "arm64" ]]; then
+  build_platform="linux/arm64"
+fi
+
+project_dir="$(pwd)"
+build_cmd="docker build --platform ${build_platform} --build-arg CAT_DEPLOYMENT=\"${TF_VAR_CAT_DEPLOYMENT}\" --tag \"${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}\" --file docker/Dockerfile ."
+run_cmd="docker run --rm --memory=4g --platform ${build_platform} --volume \"${project_dir}:/app\" \"${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}\" /app/docker/build.sh"
+
+echo "The .env file has been sourced. Do you wish to proceed with these docker commands:"
+highlight "${build_cmd}"
+echo ""
+highlight "${run_cmd}"
+echo
+
+read -r -p "Continue? [y/N] " confirmation
+case "${confirmation}" in
+  [Yy]|[Yy][Ee][Ss]) ;;
+  *) echo "Aborted."; exit 0 ;;
+esac
+
+highlight "Executing: ${build_cmd}"
+eval "${build_cmd}"
+
+highlight "Executing: ${run_cmd}"
+eval "${run_cmd}"

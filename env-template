@@ -1,0 +1,36 @@
+#################################################
+### AWS Credentials
+#################################################
+
+# Set these to your AWS credentials
+export AWS_ACCESS_KEY_ID=""
+export AWS_SECRET_ACCESS_KEY=""
+
+#################################################
+### Docker Configuration
+#################################################
+
+export DOCKER_IMAGE_NAME="cat-builder"
+export DOCKER_IMAGE_TAG="latest"
+
+#################################################
+### Terraform Variables (prefixed by PROJECT_PREFIX)
+#################################################
+
+# Must be unique and descriptive for every infrastructure project.
+export TF_VAR_PROJECT_PREFIX="sbn-cat-template-"
+export TF_VAR_S3_BUCKET_NAME="bucket-v1"
+
+#################################################
+### Terraform Variables (not prefixed)
+#################################################
+
+export TF_VAR_AWS_REGION="us-west-2"
+export TF_VAR_CAT_ARCHITECTURE="x86_64"
+export TF_VAR_CAT_DEPLOYMENT="prod"
+export TF_VAR_CAT_LOGS_TO_CLOUDWATCH=true
+export TF_VAR_CAT_LOGS_RETENTION_DAYS=14
+export TF_VAR_S3_PUBLIC_READ=false
+export TF_VAR_S3_FILE_PREFIX="hello-world"
+export TF_VAR_CLOUDFRONT_PRICE_CLASS="PriceClass_100"
+export TF_VAR_CLOUDFRONT_DESCRIPTION="S3 Writer Lambda"

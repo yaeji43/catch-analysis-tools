@@ -178,3 +178,5 @@ cython_debug/
 # OS files
 .DS_Store
 Thumbs.db
+
+catch_analysis_tools/version.py

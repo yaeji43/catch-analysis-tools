@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
-#
-# Run locally inside the project Docker image.
+# Helper script for interactive debugging inside the base AWS container.
+# Runs amazonlinux:2 with a shell so you can experiment with installing Node, nvm, etc.
 
 set -euo pipefail
 IFS=$'\n\t'
+
+command="${1:-unset}"
 
 if [[ ! -f ".env" ]]; then
   echo "Missing .env file. Copy .env-template and configure required values." >&2
@@ -23,23 +25,19 @@ done
 
 project_dir="$(pwd)"
 image="${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}"
-lambda_arch="${TF_VAR_CAT_ARCHITECTURE:-x86_64}"
+cat_arch="${TF_VAR_CAT_ARCHITECTURE:-x86_64}"
 platform_opt=(--platform linux/amd64)
-if [[ "${lambda_arch}" == "arm64" ]]; then
+if [[ "${cat_arch}" == "arm64" ]]; then
   platform_opt=(--platform linux/arm64)
 fi
 
-echo "Running inside ${image} (${platform_opt[0]})"
-
-# hello_cmd=$'set -euo pipefail\nnode -v\nnode -e \'console.log("Lambda template hello world from " + process.version)\'\n'
-run_cmd='python3 -m catch_analysis_tools.app'
-
-set -x
-docker run --rm --memory=1g "${platform_opt[@]}" \
-  --volume "${project_dir}:/app" \
-  --workdir /app \
-  "${image}" \
-  /bin/bash -lc "${run_cmd}"
-set +x
-
-echo "Container test completed."
+case $command in
+  shell)
+    echo "Starting interactive shell in ${image}."
+    docker run --rm -it "${image}" /bin/bash
+    ;;
+  *)
+    echo "Usage: $0 [shell]"
+    exit 1
+    ;;
+esac

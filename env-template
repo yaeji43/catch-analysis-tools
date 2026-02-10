@@ -10,7 +10,7 @@ export AWS_SECRET_ACCESS_KEY=""
 ### Docker Configuration
 #################################################
 
-export DOCKER_IMAGE_NAME="cat-builder"
+export DOCKER_IMAGE_NAME="sbn-cat"
 export DOCKER_IMAGE_TAG="latest"
 
 #################################################
@@ -18,7 +18,7 @@ export DOCKER_IMAGE_TAG="latest"
 #################################################
 
 # Must be unique and descriptive for every infrastructure project.
-export TF_VAR_PROJECT_PREFIX="sbn-cat-template-"
+export TF_VAR_PROJECT_PREFIX="sbn-cat-"
 export TF_VAR_S3_BUCKET_NAME="bucket-v1"
 
 #################################################

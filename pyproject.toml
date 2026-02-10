@@ -8,7 +8,7 @@ authors = [
     { name = "Yaeji Kim", email = "ykim1231@umd.edu" },
     { name = "John Dailey", email = "dailey@umd.edu" },
 ]
-license = { text = "BSD 3-Clause License" }
+license = "BSD-3-Clause"
 dependencies = [
     "numpy",
     "astropy>=6.1",
@@ -24,6 +24,13 @@ dependencies = [
 ]
 dynamic = ["version"]
 
+[build-system]
+requires = ["setuptools>=80", "setuptools-scm>=8", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["catch_analysis_tools"]
+
 [project.urls]
 homepage = "https://catch.astro.umd.edu/"
 
@@ -37,6 +44,7 @@ test = [
     "pytest-cov",   
     "tox"
 ]
+dev = ["build"]
 
 [tool.pytest.ini_options]
 addopts = "--cov=catch_analysis_tools --cov-report=term-missing"

@@ -5,3 +5,4 @@ set -e
 cd /app
 
 echo "Hello world!"
+

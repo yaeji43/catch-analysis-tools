@@ -16,7 +16,7 @@ if [[ ! -f ".env" ]]; then
   exit 1
 fi
 
-if ! command -v docker >/dev/null 2>&1; then
+if [ ! command -v docker >/dev/null 2>&1 ]; then
   echo "Docker command not found. Install Docker and try again." >&2
   exit 1
 fi
@@ -43,13 +43,15 @@ if [[ "${cat_arch}" == "arm64" ]]; then
 fi
 
 project_dir="$(pwd)"
+package_cmd="python3 -m build sdist"
 build_cmd="docker build --platform ${build_platform} --build-arg CAT_DEPLOYMENT=\"${TF_VAR_CAT_DEPLOYMENT}\" --tag \"${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}\" --file docker/Dockerfile ."
-run_cmd="docker run --rm --memory=4g --platform ${build_platform} --volume \"${project_dir}:/app\" \"${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}\" /app/docker/build.sh"
+#run_cmd="docker run --rm --memory=4g --platform ${build_platform} --volume \"${project_dir}:/app\" \"${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}\" /app/docker/run.sh"
 
 echo "The .env file has been sourced. Do you wish to proceed with these docker commands:"
+highlight "${package_cmd}"
 highlight "${build_cmd}"
-echo ""
-highlight "${run_cmd}"
+#echo ""
+#highlight "${run_cmd}"
 echo
 
 read -r -p "Continue? [y/N] " confirmation
@@ -58,8 +60,8 @@ case "${confirmation}" in
   *) echo "Aborted."; exit 0 ;;
 esac
 
+highlight "Executing: ${package_cmd}"
+eval "${package_cmd}"
+
 highlight "Executing: ${build_cmd}"
 eval "${build_cmd}"
-
-highlight "Executing: ${run_cmd}"
-eval "${run_cmd}"

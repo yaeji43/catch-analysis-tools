@@ -10,22 +10,32 @@ RUN apt-get update && apt-get install -y \
   wget \
   build-essential
 
-# Copy python code, but this is only used for running locally
-COPY \
-  setup.py \
-  pyproject.toml \
-  requirements.prod.txt \
-  requirements.local.txt \
-  catch_analysis_tools \
-  .
+RUN pip install -U pip setuptools wheel
 
-# Install dependencies
-ARG CAT_DEPLOYMENT
-RUN pip install -q -U pip setuptools wheel
-RUN if [ "$CAT_DEPLOYMENT" = "prod" ]; then \
-  pip install -r requirements.prod.txt; \
-else \
-  pip install .; \
-  pip install -r requirements.local.txt; \
-fi
+COPY dist /app/dist
+COPY requirements.local.txt .
+RUN pip install -r requirements.local.txt
+#RUN pip install --find-links dist catch_analysis_tools
 
+
+# Checkout code
+# RUN --mount=type=bind,source=./,target=/app/src/
+# COPY \
+#   requirements.local.txt \
+#   setup.py \
+#   pyproject.toml \
+#   .
+# COPY catch_analysis_tools /app/catch_analysis_tools
+
+# # ARG CAT_DEPLOYMENT
+# # RUN if [ "$CAT_DEPLOYMENT" = "prod" ]; then \
+# #   git clone git+https://github.com
+# #   pip install -r src/requirements.prod.txt; \
+# # else \
+# # fi
+
+# # Install dependencies
+# #RUN pip install -r requirements.local.txt;
+
+# # Install code
+# RUN pip install 

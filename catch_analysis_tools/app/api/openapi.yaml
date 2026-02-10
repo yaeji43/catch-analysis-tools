@@ -1,0 +1,54 @@
+openapi: "3.0.0"
+info:
+  title: Catch Analysis Tools
+  version: 0.0.1
+paths:
+  /source_instr_mag:
+    post:
+      operationId: catch_analysis_tools.app.services.photometry.source_instr_mag
+      summary: "Compute the instrumental magnitude from input source flux."
+      parameters:
+        - name: ap_flux
+          in: query
+          description: "Flux from user aperture"
+          example: "1322.9"
+          required: true
+          schema:
+            type: number
+        - name: ap_fluxerr
+          in: query
+          description: "Error on aperture flux"
+          example: "52.1"
+          required: true
+          schema:
+            type: number
+        - name: exposure_time
+          in: query
+          description: "Exposure time of source pixels"
+          example: "60.0"
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Instrumental Magnitude
+          content:
+            application/json:
+              schema:
+                type: array
+                description: Magnitude from source flux with asymmetric uncertainties.
+                items:
+                  type: object
+                  description: Collection-facility-instrument combination and number of data products.
+                  properties:
+                    instr_mag:
+                      description: Instrumental magnitude
+                      type: number
+                    instr_mag_hi_uncert:
+                      description: Upper uncertainty on instrumental magnitude
+                      type: number
+                    instr_mag_lo_uncert:
+                      description: Lower uncertainty on instrumental magnitude
+                      type: number
+        
+        

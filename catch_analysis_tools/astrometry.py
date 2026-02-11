@@ -334,7 +334,7 @@ def create_header(image, wcs_solution, zp, unc, source_list, matched_idx, colore
     primary_hdu.header['REF_CATA'] = catalog
     primary_hdu.header['REF_FLT']  = obj_band
     primary_hdu.header['CAT_COR']  = f"{cal_band}-{obj_band}"
-    source_list_clean = source_list.applymap(lambda x: x.filled(np.nan) if hasattr(x, 'filled') else x)
+    source_list_clean = source_list.map(lambda x: x.filled(np.nan) if hasattr(x, 'filled') else x)
     detected_hdu = fits.BinTableHDU(Table.from_pandas(source_list_clean), name='DETECTED_SOURCES')
     if not source_list_clean.empty:
         matched_hdu = fits.BinTableHDU(Table.from_pandas(source_list_clean.iloc[matched_idx].reset_index(drop=True)), name='SELECTED_STARS')

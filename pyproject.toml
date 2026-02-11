@@ -10,13 +10,13 @@ authors = [
 ]
 license = "BSD-3-Clause"
 dependencies = [
-    "numpy",
+    "numpy>=2.0",
     "astropy>=6.1",
     "photutils",
     "scipy",
     "matplotlib",
     "scikit-image",
-    "pandas",
+    "pandas>=3.0",
     "sep",
     "fitsio",
     "calviacat",

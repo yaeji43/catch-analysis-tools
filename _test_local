@@ -32,7 +32,7 @@ fi
 echo "Running inside ${image} (${platform_opt[0]})"
 
 # hello_cmd=$'set -euo pipefail\nnode -v\nnode -e \'console.log("Lambda template hello world from " + process.version)\'\n'
-run_cmd='python3 -m catch_analysis_tools.app'
+run_cmd='python3 -m catch_analysis_tools.app.app'
 
 set -x
 docker run --rm --memory=1g "${platform_opt[@]}" \

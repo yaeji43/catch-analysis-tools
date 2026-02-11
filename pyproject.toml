@@ -21,6 +21,7 @@ dependencies = [
     "fitsio",
     "calviacat",
     "mastcasjobs",
+    "connexion[flask,swagger-ui,uvicorn]>=3.3.0",
 ]
 dynamic = ["version"]
 

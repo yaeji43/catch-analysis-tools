@@ -34,5 +34,6 @@ The CAT may be run as a containerized service, hosted locally or by AWS Fargate.
 Running locally will install the currently checked out version of the CAT.
 
 1. Copy env-template to .env and edit.
-    a. Set TF_VAR_CAT_DEPLOYMENT="local"
-2. bash _docker
+    a. Set TF_VAR_CAT_DEPLOYMENT to "local"
+2. bash _build_container
+3. bash _test_local

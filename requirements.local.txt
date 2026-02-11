@@ -1,0 +1,15 @@
+# Dependencies are specified in pyproject.toml, but also adding them here will
+# allow Docker to cache them saving dev time.
+
+numpy
+astropy
+photutils
+scipy
+matplotlib
+scikit-image
+pandas
+sep
+fitsio
+calviacat
+mastcasjobs
+connexion[flask,swagger-ui,uvicorn]

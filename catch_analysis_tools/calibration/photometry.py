@@ -1,7 +1,7 @@
+import calviacat as cvc
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import calviacat as cvc
 from astropy.io import fits
 from astropy.table import Table
 
@@ -211,6 +211,7 @@ def plot_photometric_matches(
     ax.legend()
 
     return fig, ax
+
 
 def write_photometric_calibration_output(
     image,

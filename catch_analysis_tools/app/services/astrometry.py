@@ -1,21 +1,23 @@
-import numpy as np
+import base64
+import io
 import os
 import subprocess
-import pandas as pd
-import sep
+from copy import deepcopy
+from typing import Any
+
+import calviacat as cvc
 import fitsio
 import matplotlib
-matplotlib.use("Agg")
-import io
-import base64
 import matplotlib.pyplot as plt
-from astropy.io import fits
-from astropy.wcs import WCS
-from astropy.table import Table
+import numpy as np
+import pandas as pd
+import sep
 from astropy.coordinates import SkyCoord
-from typing import Dict, Any
-from copy import deepcopy
-import calviacat as cvc
+from astropy.io import fits
+from astropy.table import Table
+from astropy.wcs import WCS
+
+matplotlib.use("Agg")
 
 
 class AstrometrySolveError(RuntimeError):
@@ -46,7 +48,7 @@ DEFAULT_CONFIG = {
     "output": {
         "make_plots": False,
         "write_fits": False,
-    }
+    },
 }
 
 
@@ -66,7 +68,7 @@ def run_solve_field(input_fits, output_wcs, wcs_cfg):
     """
     if os.path.exists(output_wcs):
         return True
-        
+
     if wcs_cfg["use_ra_dec"]:
         if wcs_cfg.get("ra") is None or wcs_cfg.get("dec") is None:
             raise RuntimeError("RA/Dec missing while use_ra_dec=True")
@@ -78,39 +80,47 @@ def run_solve_field(input_fits, output_wcs, wcs_cfg):
     config_file = os.environ.get("ASTROMETRY_CONFIG")
     if config_file is None:
         raise RuntimeError(
-            "ASTROMETRY_CONFIG is not set. "
-            "This is required to run solve-field."
+            "ASTROMETRY_CONFIG is not set. This is required to run solve-field."
         )
 
     command = [
         "solve-field",
         "--overwrite",
-        "--config", config_file,
+        "--config",
+        config_file,
         "--fits-image",
-        "--wcs", output_wcs,     
-        "--no-plots",          
+        "--wcs",
+        output_wcs,
+        "--no-plots",
     ]
 
     # --- RA/Dec only if enabled ---
     if wcs_cfg["use_ra_dec"]:
         command += [
-            "--ra", str(wcs_cfg["ra"]),
-            "--dec", str(wcs_cfg["dec"]),
+            "--ra",
+            str(wcs_cfg["ra"]),
+            "--dec",
+            str(wcs_cfg["dec"]),
         ]
 
     command += [
-        "--scale-units", "arcsecperpix",
-        "--scale-low", str(scale_low),
-        "--scale-high", str(scale_high),
+        "--scale-units",
+        "arcsecperpix",
+        "--scale-low",
+        str(scale_low),
+        "--scale-high",
+        str(scale_high),
     ]
 
     if wcs_cfg["use_ra_dec"]:
         command += [
-            "--radius", str(int(wcs_cfg["search_radius"])),
+            "--radius",
+            str(int(wcs_cfg["search_radius"])),
         ]
 
     command += [
-        "--downsample", "1",
+        "--downsample",
+        "1",
         input_fits,
     ]
 
@@ -126,23 +136,30 @@ def find_sources(image, det_cfg):
     """
     Detect sources in an image using SEP background subtraction and extraction.
 
+
     Parameters
     ----------
     image_sub : array_like
         2D numpy array after background subtraction (cleaned image).
+
     bkg_err : float or array_like
         Background noise estimate (global RMS or per‐pixel error map).
+
     snr : float
         Minimum signal-to-noise ratio threshold for source extraction.
+
     aperture_radius : float, optional
         Radius of the circular aperture in pixels for flux summation (default is 7.0).
+
 
     Returns
     -------
     source_list : pd.DataFrame
         Table of detected sources with aperture photometry columns.
+
     image_sub : np.ndarray
         Background-subtracted image array.
+
     """
     bkg = sep.Background(image)
     image_sub = image - bkg.back()
@@ -150,26 +167,23 @@ def find_sources(image, det_cfg):
     sep.set_sub_object_limit(500)
 
     sources = sep.extract(
-        image_sub,
-        thresh=det_cfg["snr"],
-        err=bkg.globalrms,
-        deblend_nthresh=16
+        image_sub, thresh=det_cfg["snr"], err=bkg.globalrms, deblend_nthresh=16
     )
 
     source_list = pd.DataFrame(sources)
 
     flux, flux_err, _ = sep.sum_circle(
         image_sub,
-        source_list['x'],
-        source_list['y'],
+        source_list["x"],
+        source_list["y"],
         det_cfg["aperture_radius"],
-        err=bkg.globalrms
+        err=bkg.globalrms,
     )
 
-    source_list['aperture_sum'] = flux
-    source_list['aperture_err'] = flux_err
+    source_list["aperture_sum"] = flux
+    source_list["aperture_err"] = flux_err
 
-    source_list = source_list[source_list['aperture_sum'] > 0].reset_index(drop=True)
+    source_list = source_list[source_list["aperture_sum"] > 0].reset_index(drop=True)
 
     return source_list, image_sub
 
@@ -178,15 +192,18 @@ def load_wcs(output_wcs):
     """
     Load a WCS solution from a FITS file header.
 
+
     Parameters
     ----------
     output_wcs : str
         Path to the FITS file containing the WCS header from astrometry.net().
 
+
     Returns
     -------
     wcs_solution : astropy.wcs.WCS
         World coordinate system solution object.
+
     """
     if not os.path.exists(output_wcs):
         raise FileNotFoundError(f"WCS file not found: {output_wcs}")
@@ -213,10 +230,10 @@ def retrieve_sources(source_list, wcs_solution):
     sky_coords : astropy.coordinates.SkyCoord
         SkyCoord object with celestial coordinates of sources.
     """
-    world = wcs_solution.pixel_to_world(source_list['x'], source_list['y'])
-    source_list['RA'] = [c.ra.deg for c in world]
-    source_list['Dec'] = [c.dec.deg for c in world]
-    sky_coords = SkyCoord(source_list['RA'], source_list['Dec'], unit='deg')
+    world = wcs_solution.pixel_to_world(source_list["x"], source_list["y"])
+    source_list["RA"] = [c.ra.deg for c in world]
+    source_list["Dec"] = [c.dec.deg for c in world]
+    sky_coords = SkyCoord(source_list["RA"], source_list["Dec"], unit="deg")
     return source_list, sky_coords
 
 
@@ -224,18 +241,25 @@ def calibrate_photometry(sky_coords, source_list, phot_cfg):
     """
     Calibrate instrumental magnitudes against a Pan-STARRS1 catalog.
 
+
     Parameters
     ----------
     sky_coords : astropy.coordinates.SkyCoord
         Celestial coordinates of detected sources.
+
     source_list : pd.DataFrame
         Table of detected sources containing 'aperture_sum'.
+
     catalog : str, optional
         Name of the photometric catalog class in calviacat (default 'PanSTARRS1').
+
     obs_band : str, optional
-        Filter of the observed image (used for labeling and color index only; default: 'obs_band').
+        Filter of the observed image (used for labeling and color index only;
+        default: 'obs_band').
+
     cal_band : str, optional
         Reference catalog filter for color term (e.g. 'g', 'r', 'i'; default 'g').
+
 
     Returns
     -------
@@ -252,6 +276,7 @@ def calibrate_photometry(sky_coords, source_list, phot_cfg):
         - color_index  : str, the color string used (e.g. 'r-g')
         - objids       : array_like, matched catalog object IDs
         - distances    : array_like, matching distances
+
     """
     catalog = phot_cfg["catalog"]
     obs_band = phot_cfg["obs_band"]
@@ -268,7 +293,7 @@ def calibrate_photometry(sky_coords, source_list, phot_cfg):
 
     objids, distances = ref.xmatch(sky_coords)
 
-    m_inst = -2.5 * np.log10(source_list['aperture_sum'].values)
+    m_inst = -2.5 * np.log10(source_list["aperture_sum"].values)
 
     zp, C, unc, m_cal, color_mags, _ = ref.cal_color(
         objids,
@@ -292,14 +317,7 @@ def calibrate_photometry(sky_coords, source_list, phot_cfg):
     }
 
 
-def plot_color_correction(
-    color_mags,
-    m,
-    m_inst,
-    C,
-    zp,
-    color_index: str
-):
+def plot_color_correction(color_mags, m, m_inst, C, zp, color_index: str):
     """
     Plot the relation between instrumental and calibrated magnitudes.
 
@@ -324,11 +342,11 @@ def plot_color_correction(
         Matplotlib figure and axis objects for the plot.
     """
     fig, ax = plt.subplots()
-    ax.scatter(color_mags, m - m_inst, marker='.')
+    ax.scatter(color_mags, m - m_inst, marker=".")
     x = np.linspace(0, 1.5, 100)
-    ax.plot(x, C * x + zp, color='red', label=f'$m = C\\times({color_index}) + ZP$')
-    ax.set_xlabel(f'${color_index}$ (mag)')
-    ax.set_ylabel(r'$m - m_{\mathrm{inst}}$ (mag)')
+    ax.plot(x, C * x + zp, color="red", label=f"$m = C\\times({color_index}) + ZP$")
+    ax.set_xlabel(f"${color_index}$ (mag)")
+    ax.set_ylabel(r"$m - m_{\mathrm{inst}}$ (mag)")
     plt.tight_layout()
     return fig, ax
 
@@ -355,18 +373,55 @@ def plot_image(telescope_image_sub, source_list, matched_idx, colored_idx):
     """
     fig, ax = plt.subplots()
     m, s = np.mean(telescope_image_sub), np.std(telescope_image_sub)
-    im = ax.imshow(telescope_image_sub, interpolation='nearest', origin='lower', cmap='gray')
-    im.set_clim(vmin=m-s, vmax=m+s)
+    im = ax.imshow(
+        telescope_image_sub, interpolation="nearest", origin="lower", cmap="gray"
+    )
+    im.set_clim(vmin=m - s, vmax=m + s)
     fig.colorbar(im, ax=ax)
-    ax.plot(source_list['x'], source_list['y'], '+', markersize=5, label='Detected', color='red',)
-    ax.plot(source_list['x'].iloc[matched_idx], source_list['y'].iloc[matched_idx], 'o', markersize=10, color='blue', markerfacecolor='none', label='Matched')
-    ax.plot(source_list['x'].iloc[colored_idx], source_list['y'].iloc[colored_idx], 'o', markersize=15, color='yellow', markerfacecolor='none', label='Selected for Color Corr')
+    ax.plot(
+        source_list["x"],
+        source_list["y"],
+        "+",
+        markersize=5,
+        label="Detected",
+        color="red",
+    )
+    ax.plot(
+        source_list["x"].iloc[matched_idx],
+        source_list["y"].iloc[matched_idx],
+        "o",
+        markersize=10,
+        color="blue",
+        markerfacecolor="none",
+        label="Matched",
+    )
+    ax.plot(
+        source_list["x"].iloc[colored_idx],
+        source_list["y"].iloc[colored_idx],
+        "o",
+        markersize=15,
+        color="yellow",
+        markerfacecolor="none",
+        label="Selected for Color Corr",
+    )
     ax.legend()
 
     return fig, ax
 
 
-def create_header(image, wcs_solution, zp, unc, source_list, matched_idx, colored_idx, input_fits, cal_band: str, catalog: str, obj_band: str):
+def create_header(
+    image,
+    wcs_solution,
+    zp,
+    unc,
+    source_list,
+    matched_idx,
+    colored_idx,
+    input_fits,
+    cal_band: str,
+    catalog: str,
+    obj_band: str,
+):
     """
     Create and write a FITS file with calibrated header and source tables.
 
@@ -395,20 +450,34 @@ def create_header(image, wcs_solution, zp, unc, source_list, matched_idx, colore
     """
     image_arr = np.asarray(image)
     primary_hdu = fits.PrimaryHDU(data=image_arr, header=wcs_solution.to_header())
-    primary_hdu.header['ZP'] = zp
-    primary_hdu.header['ZP_STD'] = unc
-    primary_hdu.header['SUV_FLT']  = cal_band
-    primary_hdu.header['REF_CATA'] = catalog
-    primary_hdu.header['REF_FLT']  = obj_band
-    primary_hdu.header['CAT_COR']  = f"{cal_band}-{obj_band}"
-    source_list_clean = source_list.map(lambda x: x.filled(np.nan) if hasattr(x, 'filled') else x)
-    detected_hdu = fits.BinTableHDU(Table.from_pandas(source_list_clean), name='DETECTED_SOURCES')
+    primary_hdu.header["ZP"] = zp
+    primary_hdu.header["ZP_STD"] = unc
+    primary_hdu.header["SUV_FLT"] = cal_band
+    primary_hdu.header["REF_CATA"] = catalog
+    primary_hdu.header["REF_FLT"] = obj_band
+    primary_hdu.header["CAT_COR"] = f"{cal_band}-{obj_band}"
+    source_list_clean = source_list.map(
+        lambda x: x.filled(np.nan) if hasattr(x, "filled") else x
+    )
+    detected_hdu = fits.BinTableHDU(
+        Table.from_pandas(source_list_clean), name="DETECTED_SOURCES"
+    )
     if not source_list_clean.empty:
-        matched_hdu = fits.BinTableHDU(Table.from_pandas(source_list_clean.iloc[matched_idx].reset_index(drop=True)), name='SELECTED_STARS')
-        colored_hdu = fits.BinTableHDU(Table.from_pandas(source_list_clean.iloc[colored_idx].reset_index(drop=True)), name='START_COLOR_CORRECTION')
+        matched_hdu = fits.BinTableHDU(
+            Table.from_pandas(
+                source_list_clean.iloc[matched_idx].reset_index(drop=True)
+            ),
+            name="SELECTED_STARS",
+        )
+        colored_hdu = fits.BinTableHDU(
+            Table.from_pandas(
+                source_list_clean.iloc[colored_idx].reset_index(drop=True)
+            ),
+            name="START_COLOR_CORRECTION",
+        )
     else:
-        matched_hdu = fits.BinTableHDU(name='SELECTED_STARS')
-        colored_hdu = fits.BinTableHDU(name='START_COLOR_CORRECTION')
+        matched_hdu = fits.BinTableHDU(name="SELECTED_STARS")
+        colored_hdu = fits.BinTableHDU(name="START_COLOR_CORRECTION")
     hdul = fits.HDUList([primary_hdu, detected_hdu, matched_hdu, colored_hdu])
     hdul.writeto(input_fits, overwrite=True)
 
@@ -426,8 +495,18 @@ def cleanup_files(file_base):
     -------
     None
     """
-    extensions = ['.axy', '.corr', '.match', '.new', '.rdls', '.solved',
-                  '-ngc.png', '-objs.png', '-indx.png', '-indx.xyls']
+    extensions = [
+        ".axy",
+        ".corr",
+        ".match",
+        ".new",
+        ".rdls",
+        ".solved",
+        "-ngc.png",
+        "-objs.png",
+        "-indx.png",
+        "-indx.xyls",
+    ]
     for ext in extensions:
         fname = f"{file_base}{ext}"
         if os.path.exists(fname):
@@ -435,7 +514,6 @@ def cleanup_files(file_base):
 
 
 def run_pipeline(input_fits: str, user_config: dict) -> dict:
-
     config = merge_config(user_config, DEFAULT_CONFIG)
 
     wcs_cfg = config["wcs"]
@@ -451,7 +529,6 @@ def run_pipeline(input_fits: str, user_config: dict) -> dict:
     run_solve_field(input_fits, output_wcs, wcs_cfg)
 
     wcs_solution = load_wcs(output_wcs)
-    header = wcs_solution.to_header()
 
     ny, nx = image.shape
     center_world = wcs_solution.pixel_to_world(nx / 2.0, ny / 2.0)
@@ -475,8 +552,16 @@ def run_pipeline(input_fits: str, user_config: dict) -> dict:
     objids = calibration["objids"]
 
     # --- Matching indices ---
-    matched_idx = np.where(~objids.mask)[0] if hasattr(objids, "mask") else np.arange(len(source_list))
-    colored_idx = np.where(~color_mags.mask)[0] if hasattr(color_mags, "mask") else np.arange(len(source_list))
+    matched_idx = (
+        np.where(~objids.mask)[0]
+        if hasattr(objids, "mask")
+        else np.arange(len(source_list))
+    )
+    colored_idx = (
+        np.where(~color_mags.mask)[0]
+        if hasattr(color_mags, "mask")
+        else np.arange(len(source_list))
+    )
 
     # --- Plotting ---
     plots = {}
@@ -496,8 +581,13 @@ def run_pipeline(input_fits: str, user_config: dict) -> dict:
     # --- Optional FITS ---
     if out_cfg["write_fits"]:
         create_header(
-            image, wcs_solution, zp, unc,
-            source_list, matched_idx, colored_idx,
+            image,
+            wcs_solution,
+            zp,
+            unc,
+            source_list,
+            matched_idx,
+            colored_idx,
             input_fits,
             phot_cfg["obs_band"],
             phot_cfg["catalog"],
@@ -520,7 +610,7 @@ def run_pipeline(input_fits: str, user_config: dict) -> dict:
             "center_ra_deg": center_ra,
             "center_dec_deg": center_dec,
             "pixel_scale": wcs_cfg["pixel_scale"],
-        }
+        },
     }
 
     if out_cfg["make_plots"]:
@@ -529,7 +619,7 @@ def run_pipeline(input_fits: str, user_config: dict) -> dict:
     return results
 
 
-def validate_and_normalize(body: Dict[str, Any]) -> Dict[str, Any]:
+def validate_and_normalize(body: dict[str, Any]) -> dict[str, Any]:
     """
     Minimal validation + normalization layer.
     Keeps API robust without adding heavy dependencies.
@@ -614,29 +704,24 @@ def validate_and_normalize(body: Dict[str, Any]) -> Dict[str, Any]:
         "meta": {
             "return_plot": return_plot,
             "plot_type": plot_type,
-        }
+        },
     }
 
 
 # ## when testing the code locally
 if __name__ == "__main__":
-
     # --- Simulated API request body ---
     body = {
         "image_url": "Comet_65P_Gunn_LONEOS.fits",  # not used in local test
         "ra": 51.0,
         "dec": 17.0,
         "use_ra_dec": True,
-
         "pixel_scale": 2.5,
-
         "snr_threshold": 3.0,
         "aperture_radius": 7.0,
-
         "catalog": "PanSTARRS1",
         "obs_band": "g",
         "cal_band": "r",
-
         "return_plot": True,
         "plot_type": "color_correction",
     }
@@ -660,8 +745,9 @@ if __name__ == "__main__":
     # --- Optional: visualize plot locally ---
     if cfg["output"]["make_plots"]:
         import base64
-        import matplotlib.pyplot as plt
         import io
+
+        import matplotlib.pyplot as plt
 
         plot_type = cfg["meta"]["plot_type"]
         img_bytes = base64.b64decode(results["plots"][plot_type])

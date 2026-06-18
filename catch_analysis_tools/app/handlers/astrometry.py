@@ -9,19 +9,18 @@ import requests
 from flask import Response
 from werkzeug.exceptions import BadRequest
 
-from catch_analysis_tools.app.astrometry_readiness.get_astrometry_readiness_status import (
+from ..astrometry_readiness.get_astrometry_readiness_status import (
     get_astrometry_readiness_status,
 )
-from catch_analysis_tools.app.astrometry_readiness.is_astrometry_ready import (
+from ..astrometry_readiness.is_astrometry_ready import (
     is_astrometry_ready,
 )
-from catch_analysis_tools.app.services.astrometry import (
+from ..services.astrometry import (
     AstrometrySolveError,
     AstrometryValidationError,
     run_pipeline,
     validate_and_normalize,
 )
-
 
 logger = logging.getLogger(__name__)
 

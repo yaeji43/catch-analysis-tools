@@ -1,4 +1,4 @@
-from catch_analysis_tools.app.astrometry_readiness.start_astrometry_background_check import (
+from ..astrometry_readiness.start_astrometry_background_check import (
     start_astrometry_background_check,
 )
 

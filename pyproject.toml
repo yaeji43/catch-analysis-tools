@@ -26,6 +26,13 @@ dependencies = [
 ]
 dynamic = ["version"]
 
+[project.optional-dependencies]
+dev = ["build", "pre-commit", "ruff"]
+test = ["pytest", "pytest-remotedata", "pytest-cov", "tox"]
+
+[project.urls]
+homepage = "https://catch.astro.umd.edu/"
+
 [build-system]
 requires = ["setuptools>=80", "setuptools-scm>=8", "wheel"]
 build-backend = "setuptools.build_meta"
@@ -33,23 +40,20 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools]
 packages = ["catch_analysis_tools"]
 
-[project.urls]
-homepage = "https://catch.astro.umd.edu/"
-
 [tool.setuptools_scm]
 write_to = "catch_analysis_tools/version.py"
 
-[project.optional-dependencies]
-test = [
-    "pytest",
-    "pytest-remotedata",
-    "pytest-cov",   
-    "tox"
+[tool.ruff]
+line-length = 88
+lint.select = [
+    "E", # pycodestyle errors
+    "W", # pycodestyle warnings
+    "F", # pyflakes. "E" + "W" + "F" + "C90" (mccabe complexity) is equivalent to flake8
+    "I", # isort
 ]
-dev = ["build"]
 
 [tool.pytest.ini_options]
 addopts = "--cov=catch_analysis_tools --cov-report=term-missing"
 markers = [
-    "integration: tests that run solve-field and require astrometry.net index files"
+    "integration: tests that run solve-field and require astrometry.net index files",
 ]

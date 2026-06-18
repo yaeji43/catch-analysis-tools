@@ -1,4 +1,4 @@
-from catch_analysis_tools.app.astrometry_readiness.get_astrometry_readiness_status import (
+from ..astrometry_readiness.get_astrometry_readiness_status import (
     get_astrometry_readiness_status,
 )
 

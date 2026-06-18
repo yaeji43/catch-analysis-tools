@@ -1,14 +1,10 @@
 import os
 from urllib.parse import urljoin
 
-from catch_analysis_tools.app.astrometry_readiness.constants import INDEX_URL
-from catch_analysis_tools.app.astrometry_readiness.count_complete_index_files import (
-    count_complete_index_files,
-)
-from catch_analysis_tools.app.astrometry_readiness.get_index_dir import get_index_dir
-from catch_analysis_tools.app.astrometry_readiness.set_astrometry_readiness_status import (
-    set_astrometry_readiness_status,
-)
+from .constants import INDEX_URL
+from .count_complete_index_files import count_complete_index_files
+from .get_index_dir import get_index_dir
+from .set_astrometry_readiness_status import set_astrometry_readiness_status
 
 
 def download_index_files(session, expected_files):

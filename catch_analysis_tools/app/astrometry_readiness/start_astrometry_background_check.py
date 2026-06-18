@@ -1,14 +1,10 @@
 import threading
 
-from catch_analysis_tools.app.astrometry_readiness import state
-from catch_analysis_tools.app.astrometry_readiness.background_prepare_astrometry_data import (
-    background_prepare_astrometry_data,
-)
-from catch_analysis_tools.app.astrometry_readiness.constants import INDEX_URL
-from catch_analysis_tools.app.astrometry_readiness.get_current_time import (
-    get_current_time,
-)
-from catch_analysis_tools.app.astrometry_readiness.get_index_dir import get_index_dir
+from . import state
+from .background_prepare_astrometry_data import background_prepare_astrometry_data
+from .constants import INDEX_URL
+from .get_current_time import get_current_time
+from .get_index_dir import get_index_dir
 
 
 def start_astrometry_background_check(force=False):
@@ -17,16 +13,18 @@ def start_astrometry_background_check(force=False):
         if state.worker is not None and state.worker.is_alive():
             return dict(state.status)
 
-        state.status.update({
-            "state": "checking",
-            "ready": False,
-            "message": "Astrometry data readiness check has started.",
-            "index_dir": str(get_index_dir()),
-            "index_url": INDEX_URL,
-            "expected_files": None,
-            "error": None,
-            "updated_at": get_current_time(),
-        })
+        state.status.update(
+            {
+                "state": "checking",
+                "ready": False,
+                "message": "Astrometry data readiness check has started.",
+                "index_dir": str(get_index_dir()),
+                "index_url": INDEX_URL,
+                "expected_files": None,
+                "error": None,
+                "updated_at": get_current_time(),
+            }
+        )
         state.worker = threading.Thread(
             target=background_prepare_astrometry_data,
             kwargs={"force": force},

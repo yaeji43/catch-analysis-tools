@@ -1,10 +1,6 @@
 import threading
 
-from catch_analysis_tools.app.astrometry_readiness.constants import (
-    DEFAULT_INDEX_DIR,
-    INDEX_URL,
-)
-
+from .constants import DEFAULT_INDEX_DIR, INDEX_URL
 
 state_lock = threading.RLock()
 worker = None

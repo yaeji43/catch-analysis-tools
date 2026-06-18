@@ -2,32 +2,16 @@ import fcntl
 
 import requests
 
-from catch_analysis_tools.app.astrometry_readiness.acquire_index_download_lock import (
-    acquire_index_download_lock,
-)
-from catch_analysis_tools.app.astrometry_readiness.constants import INDEX_URL
-from catch_analysis_tools.app.astrometry_readiness.count_complete_index_files import (
-    count_complete_index_files,
-)
-from catch_analysis_tools.app.astrometry_readiness.download_index_files import (
-    download_index_files,
-)
-from catch_analysis_tools.app.astrometry_readiness.get_astrometry_readiness_status import (
-    get_astrometry_readiness_status,
-)
-from catch_analysis_tools.app.astrometry_readiness.get_index_dir import get_index_dir
-from catch_analysis_tools.app.astrometry_readiness.get_remote_index_files import (
-    get_remote_index_files,
-)
-from catch_analysis_tools.app.astrometry_readiness.index_files_complete import (
-    index_files_complete,
-)
-from catch_analysis_tools.app.astrometry_readiness.set_astrometry_readiness_status import (
-    set_astrometry_readiness_status,
-)
-from catch_analysis_tools.app.astrometry_readiness.write_ready_sentinel import (
-    write_ready_sentinel,
-)
+from .acquire_index_download_lock import acquire_index_download_lock
+from .constants import INDEX_URL
+from .count_complete_index_files import count_complete_index_files
+from .download_index_files import download_index_files
+from .get_astrometry_readiness_status import get_astrometry_readiness_status
+from .get_index_dir import get_index_dir
+from .get_remote_index_files import get_remote_index_files
+from .index_files_complete import index_files_complete
+from .set_astrometry_readiness_status import set_astrometry_readiness_status
+from .write_ready_sentinel import write_ready_sentinel
 
 
 def prepare_astrometry_data(force=False):
@@ -78,7 +62,9 @@ def prepare_astrometry_data(force=False):
             set_astrometry_readiness_status(
                 state="downloading",
                 ready=False,
-                message="Astrometry index files are incomplete. Downloading missing files.",
+                message=(
+                    "Astrometry index files are incomplete. Downloading missing files."
+                ),
                 files_present=files_present,
                 error=None,
             )

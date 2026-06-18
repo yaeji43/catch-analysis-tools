@@ -1,4 +1,4 @@
-from catch_analysis_tools.app.astrometry_readiness.get_astrometry_readiness_status import (
+from catch_analysis_tools.app.astrometry_readiness.get_astrometry_readiness_status import (  # noqa: E501
     get_astrometry_readiness_status,
 )
 from catch_analysis_tools.app.astrometry_readiness.prepare_astrometry_data import (

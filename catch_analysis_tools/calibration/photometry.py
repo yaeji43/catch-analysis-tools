@@ -11,7 +11,7 @@ def calibrate_photometric_zero_point(
     source_list: pd.DataFrame,
     catalog: str = "PanSTARRS1",
     obs_band: str = "obs_band",
-    cal_band: str = "g",
+    cal_band: str = "r",
     catalog_db: str = "cat.db",
 ):
     """
@@ -73,9 +73,32 @@ def calibrate_photometric_zero_point(
     if len(results[0]) < 500:
         ref.fetch_field(sky_coords)
 
-    objids, distances = ref.xmatch(sky_coords)
+    xmatch_result = ref.xmatch(sky_coords)
+
+    if xmatch_result is None:
+        raise RuntimeError("Photometric calibration failed: fewer than 10 catalog matches.")
+
+    objids, distances = xmatch_result
+
+    aperture_sum = np.asarray(source_list["aperture_sum"].values, dtype=float)
+    valid_flux = np.isfinite(aperture_sum) & (aperture_sum > 0)
+
+    objids = objids[valid_flux]
+    distances = distances[valid_flux]
+    aperture_sum = aperture_sum[valid_flux]
 
     m_inst = -2.5 * np.log10(aperture_sum)
+
+    valid_m_inst = np.isfinite(m_inst)
+
+    objids = objids[valid_m_inst]
+    distances = distances[valid_m_inst]
+    m_inst = m_inst[valid_m_inst]
+
+    if len(m_inst) < 10:
+        raise RuntimeError(
+            f"Photometric calibration failed: only {len(m_inst)} valid matched sources remain after filtering."
+        )
 
     zp, color_term, zp_unc, m_cal, color_mags, _ = ref.cal_color(
         objids,

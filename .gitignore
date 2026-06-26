@@ -185,3 +185,4 @@ terraform.tfstate.*
 Thumbs.db
 
 catch_analysis_tools/version.py
+.venv/

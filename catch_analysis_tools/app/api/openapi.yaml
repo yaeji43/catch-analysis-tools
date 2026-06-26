@@ -45,18 +45,15 @@ paths:
             application/json:
               schema:
                 type: object
+
   /astrometry:
     post:
       tags:
         - Astrometry
-      summary: Perform astrometry and optionally return a plot image.
-      operationId: catch_analysis_tools.app.handlers.astrometry.do_astrometry
-
+      summary: Perform geometric plate solving and update FITS headers with WCS data.
+      operationId: catch_analysis_tools.app.services.calibration.astrometry.run_astrometry_pipeline
       requestBody:
         required: true
-        description: >
-          Provide parameters for astrometry solving, source detection,
-          and photometric calibration.
         content:
           application/json:
             schema:
@@ -66,110 +63,94 @@ paths:
               properties:
                 image_url:
                   type: string
-                  description: >
-                    URL of FITS image OR local file path (if supported).
                   example: "https://uxzqjwo0ye.execute-api.us-west-1.amazonaws.com/api/images/urn:nasa:pds:gbo.ast.loneos.survey:data_augmented:060104_1a_099_fits?ra=51.11064&dec=17.38378&size=12.60arcmin&format=fits"
-
                 ra:
                   type: number
-                  nullable: true
-                  default: 0.0
-                  minimum: 0
-                  maximum: 360
-                  description: Right Ascension (deg). Used only if use_ra_dec=true.
-
+                  default: 51.11064
                 dec:
                   type: number
-                  nullable: true
-                  default: 0.0
-                  minimum: -90
-                  maximum: 90
-                  description: Declination (deg). Used only if use_ra_dec=true.
-
+                  default: 17.38378
                 use_ra_dec:
                   type: boolean
                   default: false
-                  description: >
-                    If true, constrain astrometry solve around (ra, dec).
-                    If false, perform blind solve.
-
                 pixel_scale:
                   type: number
-                  nullable: true
                   default: 2.5
-                  description: Pixel scale (arcsec/pixel). Used if scale_low/high not provided.
-
                 scale_low:
                   type: number
                   nullable: true
                   default: null
-                  description: Lower bound of pixel scale (arcsec/pixel).
-
                 scale_high:
                   type: number
                   nullable: true
                   default: null
-                  description: Upper bound of pixel scale (arcsec/pixel).
-
                 search_radius:
                   type: number
                   default: 2.0
-                  minimum: 0
-                  description: Search radius (degrees) when using RA/Dec constraint.
-
                 snr_threshold:
                   type: number
                   default: 3.0
-                  minimum: 0
-                  description: Signal-to-noise threshold for source detection.
+      responses:
+        "200":
+          description: WCS geometric calculation successful. Returns updated FITS location.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  wcs_image_url:
+                    type: string
+                    description: Filepath or URL to the updated FITS file containing WCS headers.
+                  sources_detected:
+                    type: integer
+                  center_ra_deg:
+                    type: number
+                  center_dec_deg:
+                    type: number
+                  pixel_scale:
+                    type: number
+        "422":
+          description: Astrometry engine could not solve the submitted field image.
 
+  /photometry:
+    post:
+      tags:
+        - Photometry
+      summary: Perform zero-point flux calibration from an existing WCS-solved FITS file.
+      operationId: catch_analysis_tools.app.services.calibration.photometry.run_photometry_pipeline
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - wcs_image_url
+              properties:
+                wcs_image_url:
+                  type: string
+                  example: "/var/folders/p7/l1v8bpgn10g_vgyg0kzfv6g00000gn/T/catch_astrometry_m9q8renb/input_astrometry.fits"
+                  description: The WCS-solved FITS path returned from the /astrometry endpoint.
                 aperture_radius:
                   type: number
                   default: 7.0
-                  minimum: 0
-                  description: Aperture radius (pixels) for photometry.
-
                 catalog:
                   type: string
                   enum: [PanSTARRS1, Gaia, SDSS]
                   default: PanSTARRS1
-                  description: Reference catalog for photometric calibration.
-
-                obs_band:
-                  type: string
-                  default: g
-                  description: Observed band (label only).
-
                 cal_band:
                   type: string
                   default: r
-                  description: Calibration band from catalog.
-
+                color_term:
+                  type: string
+                  default: "g-r"
                 return_plot:
                   type: boolean
                   default: false
-                  description: If true, return PNG instead of JSON.
-
                 plot_type:
                   type: string
                   enum: [color_correction, image_overlay]
                   default: color_correction
-                  description: Plot type to return when return_plot=true.
-
-            example:
-              image_url: "https://uxzqjwo0ye.execute-api.us-west-1.amazonaws.com/api/images/urn:nasa:pds:gbo.ast.loneos.survey:data_augmented:060104_1a_099_fits?ra=51.11064&dec=17.38378&size=12.60arcmin&format=fits"
-              ra: 51.11064
-              dec: 17.38378
-              use_ra_dec: true
-              pixel_scale: 2.5
-              snr_threshold: 3.0
-              aperture_radius: 7.0
-              catalog: PanSTARRS1
-              obs_band: g
-              cal_band: r
-              return_plot: true
-              plot_type: color_correction
-
       responses:
         "200":
           description: JSON results or PNG plot image.
@@ -187,28 +168,14 @@ paths:
                         type: number
                       uncertainty:
                         type: number
-
                   sources:
                     type: object
                     properties:
-                      detected:
-                        type: integer
                       matched:
                         type: integer
-
-                  astrometry:
-                    type: object
-                    properties:
-                      center_ra_deg:
-                        type: number
-                      center_dec_deg:
-                        type: number
-                      pixel_scale:
-                        type: number
-
                   plots:
                     type: object
-                    description: Base64 encoded PNG plots (optional)
+                    description: Base64 encoded PNG plots, optional for JSON responses.
                     properties:
                       color_correction:
                         type: string
@@ -233,29 +200,10 @@ paths:
                 type: string
                 format: binary
 
-        "400":
-          description: Bad request (invalid input or FITS error)
-
-        "422":
-          description: Astrometry could not solve the submitted image.
-          content:
-            application/json:
-              schema:
-                type: object
-
-        "503":
-          description: Astrometry index files are not ready yet.
-          content:
-            application/json:
-              schema:
-                type: object
-
-        "500":
-          description: Internal server error
   /subtract_median_background:
     post:
       tags:
-      - Background Estimation
+        - Background Estimation
       operationId: catch_analysis_tools.app.services.subtract_median_background.perform_median_subtraction
       summary: "Compute the median background with source masking, saving the background-subtracted image as a new FITS file."
       parameters:
@@ -294,7 +242,7 @@ paths:
   /get_world_coordinates:
     post:
       tags:
-      - Target Search
+        - Target Search
       operationId: catch_analysis_tools.app.services.photometry.get_world_coordinates
       summary: "Retrieve the RA and Dec in decimal degrees from an (x,y) pixel location, using a supplied WCS file."
       parameters:
@@ -380,7 +328,7 @@ paths:
   /get_pixel_coordinates:
     post:
       tags:
-      - Target Search
+        - Target Search
       operationId: catch_analysis_tools.app.services.photometry.get_pixel_coordinates
       summary: "Retrieve the pixel (x,y) coordinates from RA and Dec world coordinates, using a supplied WCS file."
       parameters:
@@ -442,7 +390,7 @@ paths:
   /target_photometry:
     post:
       tags:
-      - Photometry
+        - Photometry
       operationId: catch_analysis_tools.app.services.photometry.target_extraction
       summary: "Perform aperture photometry on a target using specified target and background aperture configurations."
       requestBody:
@@ -565,7 +513,7 @@ paths:
   /centroid:
     post:
       tags:
-      - Target Search
+        - Target Search
       operationId: catch_analysis_tools.app.services.photometry.centroid
       summary: "Find nearest target centroid to a user-specified point, with user-specified search radius."
       parameters:

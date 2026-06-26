@@ -57,24 +57,21 @@ def run_solve_field(
     command = [
         "solve-field",
         "--overwrite",
-        "--config",
-        config_file,
-        "--ra",
-        str(Ra_deg),
-        "--dec",
-        str(Dec_deg),
-        "--scale-units",
-        scale_units,
-        "--scale-low",
-        str(pixel_scale * 0.5),
-        "--scale-high",
-        str(pixel_scale * 2.0),
-        "--radius",
-        "2",
-        "--downsample",
-        "1",
-        input_fits,
+        "--config", config_file,
+        "--scale-units", scale_units,
+        "--scale-low", str(pixel_scale * 0.5),
+        "--scale-high", str(pixel_scale * 2.0),
+        "--downsample", "1",
     ]
+
+    if Ra_deg is not None and Dec_deg is not None:
+        command.extend([
+            "--ra", str(Ra_deg),
+            "--dec", str(Dec_deg),
+            "--radius", "2",
+        ])
+
+    command.append(input_fits)
 
     try:
         subprocess.run(command, check=True)
@@ -173,11 +170,13 @@ def retrieve_sources(source_list, wcs_solution):
         SkyCoord object with celestial coordinates of sources.
 
     """
-
-    world = wcs_solution.pixel_to_world(source_list["x"], source_list["y"])
-    source_list["RA"] = [c.ra.deg for c in world]
-    source_list["Dec"] = [c.dec.deg for c in world]
-    sky_coords = SkyCoord(source_list["RA"], source_list["Dec"], unit="deg")
+    world = wcs_solution.pixel_to_world(
+    np.asarray(source_list["x"], dtype=float),
+    np.asarray(source_list["y"], dtype=float),
+    )
+    source_list["RA"] = world.ra.deg
+    source_list["Dec"] = world.dec.deg
+    sky_coords = SkyCoord(source_list['RA'], source_list['Dec'], unit='deg')
     return source_list, sky_coords
 
 
@@ -278,7 +277,9 @@ def run_astrometry_calibration(
     else:
         raise RuntimeError("solve-field did not produce a WCS solution.")
 
-    source_list, image_sub = find_sources(image, bkg_err, snr)
+    bkg = sep.Background(image)
+    image_sub = image - bkg.back()
+    source_list, image_sub = find_sources(image_sub, bkg.globalrms, snr)
     source_list, sky_coords = retrieve_sources(source_list, wcs_solution)
 
     write_astrometry_output(
@@ -367,3 +368,77 @@ if __name__ == "__main__":
 
     except Exception as exc:
         raise SystemExit(f"Astrometric calibration failed: {exc}")
+import os
+from typing import Dict, Any
+import numpy as np
+import fitsio
+import sep
+from astropy.io import fits
+from catch_analysis_tools.calibration.astrometry import run_astrometry_calibration
+
+class AstrometryValidationError(Exception):
+    pass
+
+def validate_and_normalize_astrometry(body: Dict[str, Any]) -> Dict[str, Any]:
+    def get_float(key: str, default: Any = None) -> Any:
+        val = body.get(key, default)
+        return float(val) if val is not None else None
+
+    def get_bool(key: str, default: bool = False) -> bool:
+        val = body.get(key, default)
+        if isinstance(val, str):
+            return val.lower() in ("true", "1", "yes")
+        return bool(val)
+
+    image_url = body.get("image_url")
+    if not image_url:
+        raise AstrometryValidationError("image_url is required")
+
+    return {
+        "image_url": image_url,
+        "ra": get_float("ra"),
+        "dec": get_float("dec"),
+        "pixel_scale": get_float("pixel_scale", 2.5),
+        "scale_low": get_float("scale_low"),
+        "scale_high": get_float("scale_high"),
+        "search_radius": get_float("search_radius", 2.0),
+        "use_ra_dec": get_bool("use_ra_dec", False),
+        "snr_threshold": get_float("snr_threshold", 3.0),
+    }
+
+def run_pipeline(body: dict) -> dict:
+    cfg = validate_and_normalize_astrometry(body)
+    input_fits = cfg["image_url"]
+
+    image = fitsio.read(input_fits).astype(np.float32)
+    bkg = sep.Background(image)
+
+    astrom_res = run_astrometry_calibration(
+        input_fits=input_fits,
+        ra_deg=cfg["ra"] if cfg["use_ra_dec"] else None,
+        dec_deg=cfg["dec"] if cfg["use_ra_dec"] else None,
+        bkg_err=bkg.globalrms,
+        pixel_scale=cfg["pixel_scale"],
+        snr=cfg["snr_threshold"],
+        output_fits=None
+    )
+
+    source_list = astrom_res["source_list"]
+    wcs_solution = astrom_res["wcs_solution"]
+
+    ny, nx = image.shape
+    center_world = wcs_solution.pixel_to_world(nx / 2.0, ny / 2.0)
+
+    output_filename = input_fits.replace(".fits", ".wcs.fits")
+    with fits.open(input_fits) as hdul:
+        header = hdul[0].header
+        header.update(wcs_solution.to_header())
+        fits.writeto(output_filename, hdul[0].data, header, overwrite=True)
+
+    return {
+        "wcs_image_url": output_filename,
+        "sources_detected": int(len(source_list)),
+        "center_ra_deg": float(center_world.ra.deg),
+        "center_dec_deg": float(center_world.dec.deg),
+        "pixel_scale": cfg["pixel_scale"],
+    }

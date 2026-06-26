@@ -175,7 +175,9 @@ def retrieve_sources(source_list, wcs_solution):
 
     """
 
-    world = wcs_solution.pixel_to_world(source_list["x"], source_list["y"])
+    world = wcs_solution.pixel_to_world(
+        np.array(source_list["x"]), np.array(source_list["y"])
+    )
     source_list["RA"] = [c.ra.deg for c in world]
     source_list["Dec"] = [c.dec.deg for c in world]
     sky_coords = SkyCoord(source_list["RA"], source_list["Dec"], unit="deg")

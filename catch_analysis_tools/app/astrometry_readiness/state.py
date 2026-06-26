@@ -1,6 +1,7 @@
 import threading
 
-from .constants import DEFAULT_INDEX_DIR, INDEX_URL
+from .constants import INDEX_URL
+from .get_index_dir import get_index_dir
 
 state_lock = threading.RLock()
 worker = None
@@ -10,7 +11,7 @@ status = {
     "message": "Astrometry data has not been checked yet.",
     "files_present": 0,
     "expected_files": None,
-    "index_dir": DEFAULT_INDEX_DIR,
+    "index_dir": get_index_dir().absolute,
     "index_url": INDEX_URL,
     "updated_at": None,
     "error": None,

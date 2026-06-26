@@ -71,32 +71,45 @@ Running locally will install the currently checked out version of the CAT.
 The astrometric calibration pipeline depends on **astrometry.net** index files and a corresponding configuration file. These are required for WCS solving.
 
 ### 1. Install system dependencies
+
 ```
 sudo apt install astrometry.net netpbm
 ```
 
-### 2. Download astrometry index files
+### 2. Set required environment variables
+
+Define the location of the astrometry.net configuration file and index files.
+For example:
+
+```bash
+export ASTROMETRY_CONFIG=$HOME/.astrometry/config
+export ASTROMETRY_INDEX_DIR=$HOME/.astrometry/data
 ```
-mkdir -p ~/.astrometry/data
+
+### 3. Download astrometry index files
+
+Optionally download a subset for testing:
+
+```bash
+mkdir -p $ASTROMETRY_INDEX_DIR
 
 for i in 00 01 02 03 04 05 06 07; do
-  wget -P ~/.astrometry/data \
+  wget -P $ASTROMETRY_INDEX_DIR \
     https://portal.nersc.gov/project/cosmo/temp/dstn/index-5200/index-5204-$i.fits
 done
-
 ```
+
+Otherwise, when the API service is started, all index files will be downloaded, as needed.
+
 Note: These files are required and may take time to download (~GB total).
 
-### 3. Create astrometry configuration file
-```
-mkdir -p ~/.astrometry
-: > ~/.astrometry/config
+### 4. Create astrometry configuration file
 
-for f in ~/.astrometry/data/index-*.fits; do
-  echo "index $f" >> ~/.astrometry/config
-done
-```
-### 4. Set required environment variable
-```
-export ASTROMETRY_CONFIG=$HOME/.astrometry/config
+```bash
+mkdir -p `dirname $ASTROMETRY_CONFIG`
+cat > $ASTROMETRY_CONFIG <<EOF
+cpulimit 300
+add_path $ASTROMETRY_INDEX_DIR
+autoindex
+EOF
 ```

@@ -214,6 +214,19 @@ paths:
                         type: string
                       image_overlay:
                         type: string
+                  cache:
+                    type: object
+                    description: S3 JSON result cache metadata. Present for JSON responses.
+                    properties:
+                      enabled:
+                        type: boolean
+                      hit:
+                        type: boolean
+                      key:
+                        type: string
+                        nullable: true
+                      error:
+                        type: string
 
             image/png:
               schema:
@@ -265,6 +278,19 @@ paths:
                   background_subtracted_image_path:
                     description: Path to the background-subtracted FITS file.
                     type: string
+                  cache:
+                    type: object
+                    description: S3 JSON result cache metadata.
+                    properties:
+                      enabled:
+                        type: boolean
+                      hit:
+                        type: boolean
+                      key:
+                        type: string
+                        nullable: true
+                      error:
+                        type: string
   /get_world_coordinates:
     post:
       tags:
@@ -338,6 +364,19 @@ paths:
                   dec:
                     description: Dec value of point in decimal degrees
                     type: number
+                  cache:
+                    type: object
+                    description: S3 JSON result cache metadata.
+                    properties:
+                      enabled:
+                        type: boolean
+                      hit:
+                        type: boolean
+                      key:
+                        type: string
+                        nullable: true
+                      error:
+                        type: string
   /get_pixel_coordinates:
     post:
       tags:
@@ -387,6 +426,19 @@ paths:
                   dec:
                     description: Dec value of point in decimal degrees
                     type: number
+                  cache:
+                    type: object
+                    description: S3 JSON result cache metadata.
+                    properties:
+                      enabled:
+                        type: boolean
+                      hit:
+                        type: boolean
+                      key:
+                        type: string
+                        nullable: true
+                      error:
+                        type: string
   /target_photometry:
     post:
       tags:
@@ -489,8 +541,27 @@ paths:
                     description: Uncertainty in the aperture flux measurement.
                     type: number
                   aperture_figure:
-                    description: File path to the output plot showing apertures on the cutout image.
+                    description: Public URL to the output plot showing apertures on the cutout image.
                     type: string
+                  aperture_figure_url:
+                    description: Public URL to the output plot showing apertures on the cutout image.
+                    type: string
+                  aperture_figure_s3_key:
+                    description: S3 object key for the output plot.
+                    type: string
+                  cache:
+                    type: object
+                    description: S3 JSON result cache metadata.
+                    properties:
+                      enabled:
+                        type: boolean
+                      hit:
+                        type: boolean
+                      key:
+                        type: string
+                        nullable: true
+                      error:
+                        type: string
   /centroid:
     post:
       tags:
@@ -528,35 +599,52 @@ paths:
             type: number
       responses:
         "200":
-          description: Calibrated magnitude array from chosen aperture photometry settings, and output plot showing the aperture on the cutout
+          description: Centroid search results and public URL for the generated centroid plot.
           content:
             application/json:
               schema:
-                type: array
-                description: Magnitude from source flux with asymmetric uncertainties.
-                items:
-                  type: object
-                  description: Output from photometry.centroid_location(). Array containing search input parameters (initial guess, search radius) and final centroided location.
-                  properties:
-                    init_guess_x:
-                      description: x pixel coordinate of guess
-                      type: number
-                    init_guess_y:
-                      description: y pixel coordinate of guess
-                      type: number
-                    search_radius:
-                      description: Radius in pixels for source search
-                      type: number
-                    cent_x:
-                      description: x pixel coordinate of centroided source
-                      type: number
-                    cent_y:
-                      description: y pixel coordinate of centroided source
-                      type: number
-                  type: object
-                  description: Cutout image showing selected target centroid in the cutout image.
-                  properties:
-                    centroid_figure:
-                      description: Location of centroid plot.
-                      type: string
+                type: object
+                description: Output from photometry.centroid().
+                properties:
+                  search_results:
+                    type: object
+                    description: Search input parameters and final centroided location.
+                    properties:
+                      init_guess_x:
+                        description: x pixel coordinate of guess
+                        type: number
+                      init_guess_y:
+                        description: y pixel coordinate of guess
+                        type: number
+                      search_radius:
+                        description: Radius in pixels for source search
+                        type: number
+                      cent_x:
+                        description: x pixel coordinate of centroided source
+                        type: number
+                      cent_y:
+                        description: y pixel coordinate of centroided source
+                        type: number
+                  centroid_figure:
+                    description: Public URL to the centroid plot.
+                    type: string
+                  centroid_figure_url:
+                    description: Public URL to the centroid plot.
+                    type: string
+                  centroid_figure_s3_key:
+                    description: S3 object key for the centroid plot.
+                    type: string
+                  cache:
+                    type: object
+                    description: S3 JSON result cache metadata.
+                    properties:
+                      enabled:
+                        type: boolean
+                      hit:
+                        type: boolean
+                      key:
+                        type: string
+                        nullable: true
+                      error:
+                        type: string
                       

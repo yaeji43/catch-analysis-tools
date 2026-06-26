@@ -539,8 +539,32 @@ def run_pipeline(input_fits: str, user_config: dict) -> dict:
     source_list, telescope_image_sub = find_sources(image, det_cfg)
     source_list, sky_coords = retrieve_sources(source_list, wcs_solution)
 
+    astrometry_results = {
+        "status": "success",
+        "center_ra_deg": center_ra,
+        "center_dec_deg": center_dec,
+        "pixel_scale": wcs_cfg["pixel_scale"],
+    }
+
     # --- Photometry ---
-    calibration = calibrate_photometry(sky_coords, source_list, phot_cfg)
+    try:
+        calibration = calibrate_photometry(sky_coords, source_list, phot_cfg)
+    except Exception as exc:
+        cleanup_files(file_base)
+        return {
+            "status": "partial_success",
+            "astrometry": astrometry_results,
+            "photometry": {
+                "status": "failed",
+                "error_type": type(exc).__name__,
+                "message": str(exc),
+                "stage": "calibrate_photometry",
+            },
+            "sources": {
+                "detected": int(len(source_list)),
+                "matched": None,
+            },
+        }
 
     zp = calibration["zp"]
     C = calibration["C"]
@@ -597,7 +621,9 @@ def run_pipeline(input_fits: str, user_config: dict) -> dict:
     cleanup_files(file_base)
 
     results = {
+        "status": "success",
         "photometry": {
+            "status": "success",
             "zero_point": float(zp),
             "color_term": float(C),
             "uncertainty": float(unc),
@@ -606,11 +632,7 @@ def run_pipeline(input_fits: str, user_config: dict) -> dict:
             "detected": int(len(source_list)),
             "matched": int(len(matched_idx)),
         },
-        "astrometry": {
-            "center_ra_deg": center_ra,
-            "center_dec_deg": center_dec,
-            "pixel_scale": wcs_cfg["pixel_scale"],
-        },
+        "astrometry": astrometry_results,
     }
 
     if out_cfg["make_plots"]:

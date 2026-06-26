@@ -27,3 +27,28 @@ output "efs_file_system_id" {
   description = "EFS file system ID used to persist astrometry index files"
   value       = aws_efs_file_system.astrometry_data.id
 }
+
+output "cat_images_bucket_name" {
+  description = "Public S3 bucket used for generated CAT route images"
+  value       = aws_s3_bucket.cat_images.bucket
+}
+
+output "cat_images_cloudfront_domain_name" {
+  description = "CloudFront domain name serving generated CAT route images"
+  value       = aws_cloudfront_distribution.cat_images.domain_name
+}
+
+output "cat_images_base_url" {
+  description = "HTTPS base URL for generated CAT route images"
+  value       = local.cat_images_base_url
+}
+
+output "cat_cache_bucket_name" {
+  description = "Private S3 bucket used for CAT route JSON result cache"
+  value       = aws_s3_bucket.cat_cache.bucket
+}
+
+output "cat_cache_prefix" {
+  description = "S3 key prefix used for CAT route JSON result cache"
+  value       = var.CAT_CACHE_PREFIX
+}

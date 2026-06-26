@@ -13,4 +13,5 @@ fitsio
 calviacat
 mastcasjobs
 beautifulsoup4
+boto3
 connexion[flask,swagger-ui,uvicorn]

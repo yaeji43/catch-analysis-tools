@@ -113,3 +113,39 @@ variable "CAT_ARCHITECTURE" {
     error_message = "CAT_ARCHITECTURE must be either x86_64 or arm64."
   }
 }
+
+variable "CAT_IMAGES_BUCKET_NAME" {
+  description = "Public S3 bucket name for generated CAT route images. Must be globally unique and lowercase."
+  type        = string
+  default     = "sbn-cat-images"
+}
+
+variable "S3_BUCKET_NAME" {
+  description = "Compatibility alias for CAT_IMAGES_BUCKET_NAME. Prefer CAT_IMAGES_BUCKET_NAME for new configuration."
+  type        = string
+  default     = null
+}
+
+variable "CAT_IMAGES_PREFIX" {
+  description = "S3 key prefix used for generated CAT route images"
+  type        = string
+  default     = "generated-images/"
+}
+
+variable "CAT_CACHE_BUCKET_NAME" {
+  description = "Private S3 bucket name for CAT route JSON result cache. Leave null to derive from PROJECT_PREFIX."
+  type        = string
+  default     = null
+}
+
+variable "CAT_CACHE_PREFIX" {
+  description = "S3 key prefix used for CAT route JSON result cache"
+  type        = string
+  default     = "cache/"
+}
+
+variable "CAT_CACHE_RETENTION_DAYS" {
+  description = "Number of days to retain CAT route JSON cache objects"
+  type        = number
+  default     = 30
+}

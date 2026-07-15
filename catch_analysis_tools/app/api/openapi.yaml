@@ -46,7 +46,7 @@ paths:
               schema:
                 type: object
 
-  /astrometry:
+  /calibration/astrometry:
     post:
       tags:
         - Astrometry
@@ -112,7 +112,7 @@ paths:
         "422":
           description: Astrometry engine could not solve the submitted field image.
 
-  /photometry:
+  /calibration/photometry:
     post:
       tags:
         - Photometry
@@ -129,8 +129,8 @@ paths:
               properties:
                 wcs_image_url:
                   type: string
-                  example: "/var/folders/p7/l1v8bpgn10g_vgyg0kzfv6g00000gn/T/catch_astrometry_m9q8renb/input_astrometry.fits"
-                  description: The WCS-solved FITS path returned from the /astrometry endpoint.
+                  example: "/Users/yaejikim/Documents/UMD/Research/PDS_CATCHI/catch-analysis-tools/catch_analysis_tools/app/outputs/astrometry/input_231de751_astrometry.fits"
+                  description: Persistent WCS-solved FITS path returned from the /astrometry endpoint.
                 aperture_radius:
                   type: number
                   default: 7.0

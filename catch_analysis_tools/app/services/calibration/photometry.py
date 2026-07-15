@@ -33,7 +33,7 @@ class PhotometryCalibrationError(RuntimeError):
 DEFAULT_CONFIG = {
     "photometry": {
         "catalog": "PanSTARRS1",
-        "obs_band": "g",
+        "color_term": "g-r",
         "cal_band": "r",
     },
     "detection": {
@@ -140,21 +140,14 @@ def validate_and_normalize(body: Dict[str, Any]) -> Dict[str, Any]:
     if not wcs_image_url:
         raise PhotometryValidationError("wcs_image_url is required")
 
-    color_index = body.get("color_term")
-    obs_band = body.get("obs_band")
+    color_term = body.get("color_term", "g-r")
     cal_band = body.get("cal_band", "r")
-
-    if obs_band is None and isinstance(color_index, str) and "-" in color_index:
-        obs_band = color_index.split("-", 1)[0]
-
-    if obs_band is None:
-        obs_band = "g"
 
     return {
         "wcs_image_url": wcs_image_url,
         "photometry": {
             "catalog": body.get("catalog", "PanSTARRS1"),
-            "obs_band": obs_band,
+            "color_term": color_term,
             "cal_band": cal_band,
         },
         "detection": {
@@ -312,7 +305,7 @@ def run_photometry_from_config(input_fits: str, user_config: dict) -> dict:
             sky_coords=sky_coords,
             source_list=source_list,
             catalog=phot_cfg["catalog"],
-            obs_band=phot_cfg["obs_band"],
+            color_term=phot_cfg["color_term"],
             cal_band=phot_cfg["cal_band"],
         )
     except Exception as exc:
@@ -378,7 +371,6 @@ def run_photometry_from_config(input_fits: str, user_config: dict) -> dict:
             zero_point=zp,
             zero_point_uncertainty=unc,
             catalog=phot_cfg["catalog"],
-            obs_band=phot_cfg["obs_band"],
             cal_band=phot_cfg["cal_band"],
             color_index=color_index,
             color_term=color_term,

@@ -10,7 +10,7 @@ def calibrate_photometric_zero_point(
     sky_coords,
     source_list: pd.DataFrame,
     catalog: str = "PanSTARRS1",
-    obs_band: str = "obs_band",
+    color_term: str = "g-r",
     cal_band: str = "r",
     catalog_db: str = "cat.db",
 ):
@@ -60,7 +60,7 @@ def calibrate_photometric_zero_point(
             "All aperture_sum values must be positive before magnitude calibration."
         )
 
-    color_index = f"{obs_band}-{cal_band}"
+    color_index = color_term
 
     try:
         CatalogClass = getattr(cvc, catalog)
@@ -104,7 +104,7 @@ def calibrate_photometric_zero_point(
         objids,
         m_inst,
         cal_band,
-        color_index,
+        color_term,
     )
 
     return {
@@ -113,10 +113,9 @@ def calibrate_photometric_zero_point(
         "unc": zp_unc,
         "m": m_cal,
         "m_inst": m_inst,
-        "obs_band": obs_band,
         "cal_band": cal_band,
         "color_mags": color_mags,
-        "color_index": color_index,
+        "color_index": color_term,
         "objids": objids,
         "distances": distances,
     }
@@ -246,16 +245,12 @@ def write_photometric_calibration_output(
     zero_point,
     zero_point_uncertainty,
     catalog: str,
-    obs_band: str,
     cal_band: str,
     color_index: str,
     color_term=None,
 ):
     """
     Write a FITS file with photometric calibration metadata and source tables.
-
-    This should be called after astrometry has already produced a WCS solution
-    and photometric calibration has estimated the zero point and color term.
     """
     image_arr = np.asarray(image)
 
@@ -267,7 +262,6 @@ def write_photometric_calibration_output(
     primary_hdu.header["ZP"] = zero_point
     primary_hdu.header["ZP_STD"] = zero_point_uncertainty
     primary_hdu.header["REF_CATA"] = catalog
-    primary_hdu.header["OBS_FLT"] = obs_band
     primary_hdu.header["REF_FLT"] = cal_band
     primary_hdu.header["CAT_COR"] = color_index
 

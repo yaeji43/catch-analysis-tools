@@ -1,12 +1,14 @@
 import os
+import tempfile
+import urllib.request
+import uuid
+from pathlib import Path
 from typing import Any, Dict
+from urllib.parse import urlparse
+
 import fitsio
 import numpy as np
 import sep
-import tempfile
-import urllib.request
-from urllib.parse import urlparse
-
 
 from catch_analysis_tools.calibration.astrometry import run_astrometry_calibration
 
@@ -42,6 +44,7 @@ def _get_bool(body: Dict[str, Any], key: str, default=False):
 
     return bool(value)
 
+
 def materialize_input_fits(image_url: str) -> str:
     """
     Convert a local FITS path or remote FITS URL into a clean local FITS path.
@@ -56,6 +59,19 @@ def materialize_input_fits(image_url: str) -> str:
         return local_path
 
     return image_url
+
+
+def _resolve_astrometry_output_fits(input_fits: str) -> str:
+    """
+    Build a persistent output path for the astrometrically solved FITS file.
+    """
+    out_dir = Path(__file__).resolve().parents[2] / "outputs" / "astrometry"
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    stem = Path(input_fits).stem
+    unique_suffix = uuid.uuid4().hex[:8]
+    return str(out_dir / f"{stem}_{unique_suffix}_astrometry.fits")
+
 
 def validate_and_normalize_astrometry(body: Dict[str, Any]) -> Dict[str, Any]:
     image_url = body.get("image_url")
@@ -110,6 +126,7 @@ def run_astrometry_pipeline(body=None, **kwargs) -> Dict[str, Any]:
 
     cfg = validate_and_normalize_astrometry(body)
     input_fits = materialize_input_fits(cfg["image_url"])
+    output_fits = _resolve_astrometry_output_fits(input_fits)
 
     image = fitsio.read(input_fits).astype(np.float32)
     bkg = sep.Background(image)
@@ -126,20 +143,19 @@ def run_astrometry_pipeline(body=None, **kwargs) -> Dict[str, Any]:
             bkg_err=bkg_err,
             pixel_scale=cfg["pixel_scale"],
             snr=cfg["snr_threshold"],
-            output_fits=None,
+            output_fits=output_fits,
         )
     except Exception as exc:
         raise AstrometrySolveError(f"Astrometry calibration failed: {exc}") from exc
 
     source_list = astrom_res["source_list"]
     wcs_solution = astrom_res["wcs_solution"]
-    output_fits = astrom_res["output_fits"]
 
     ny, nx = image.shape
     center_world = wcs_solution.pixel_to_world(nx / 2.0, ny / 2.0)
 
     return {
-        "wcs_image_url": output_fits,
+        "wcs_image_url": astrom_res["output_fits"],
         "sources_detected": int(len(source_list)),
         "center_ra_deg": float(center_world.ra.deg),
         "center_dec_deg": float(center_world.dec.deg),
